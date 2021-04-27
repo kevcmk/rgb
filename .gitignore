@@ -1,0 +1,9 @@
+.idea
+**.DS_Store
+scripts/wpa_supplicant.conf.*
+resources/*.img
+env
+venv
+balena-cli
+scripts/resources/*.img
+scripts/resources/*.zip
