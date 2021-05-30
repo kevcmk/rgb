@@ -22,8 +22,6 @@ RUN make install-python PYTHON=$(which python3)
 WORKDIR /app
 COPY . .
 
-
-
 # invoke docker with -p 54321:54321 to prevent multiple concurrent runs.
 EXPOSE 54321
 
