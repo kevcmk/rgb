@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM rgb-python
+FROM kevinkatz/pi-matrix:latest
 
 WORKDIR /app/rpi-rgb-led-matrix/bindings/python/samples/
 
