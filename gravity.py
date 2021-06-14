@@ -6,6 +6,7 @@ from typing import List, Set, Tuple
 import math
 from random import randrange
 import time
+from samplebase import SampleBase
 from dataclasses import dataclass
 import colorsys
 import logging
@@ -35,7 +36,7 @@ class Elt:
     def __eq__(self, other):
         return hash(self) == hash(other)
     
-class Gravity():
+class Gravity(SampleBase):
     def __init__(self, matrix_height, matrix_width, *args, **kwargs):
         super(Gravity, self).__init__(*args, **kwargs)
         self.hz = 60
@@ -102,16 +103,13 @@ class Gravity():
             
             log.info(i)
 
-            
-            # log.info(elts)
-            
             self.populate_particles()
             self.step(self.dt)
             img = self.render()
 
             im = ax.imshow(img, animated=True)
             if i == 0:
-                ax.imshow(img)  # show an initial one first
+                ax.imshow(img)  # show an initial one firstx
             ims.append([im])
 
         log.info("Animating.")
