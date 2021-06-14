@@ -13,8 +13,6 @@ import logging
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -37,12 +35,10 @@ class Elt:
         return hash(self) == hash(other)
     
 class Gravity(SampleBase):
-    def __init__(self, matrix_height, matrix_width, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(Gravity, self).__init__(*args, **kwargs)
         self.hz = 60
         self.steps = 250
-        self.matrix_height: int = matrix_height
-        self.matrix_width: int = matrix_width
         self.world_height: float = 0.320 # Meters 32x5mm
         self.world_width: float = 0.320 # Meters 32x5mm
         self.population = 100
@@ -56,6 +52,15 @@ class Gravity(SampleBase):
                     x=random.uniform(0, self.world_width)
                 ) 
             )
+
+    @property
+    def matrix_height(self) -> int:
+        return self.matrix.height
+    
+    @property
+    def matrix_width(self) -> int:
+        return self.matrix.width
+
     @property
     def matrix_scale(self) -> float:
         # E.g. 1:4 would be 0.25
@@ -63,7 +68,7 @@ class Gravity(SampleBase):
 
     @property
     def dt(self):
-        return 1 / self.hz
+        return 1 / float(self.hz)
         
     def step(self, dt):
         for elt in self.particles:
@@ -86,8 +91,10 @@ class Gravity(SampleBase):
         # Return the vertical flip, origin at the top.
         return np.flipud(img)
     
-    def run(self):
-
+    def plot(self):
+        
+        import matplotlib.pyplot as plt
+        import matplotlib.animation as animation
         # https://matplotlib.org/stable/gallery/animation/dynamic_image.html
 
         fig, ax = plt.subplots()
@@ -129,12 +136,28 @@ class Gravity(SampleBase):
 
         plt.show()
 
+    def run(self):
+        log.info("Running...")
+        offset_canvas = self.matrix.CreateFrameCanvas()
+        while True:
+            self.populate_particles()
+            self.step(self.dt)
+            img = self.render()
+            
+            for i in range(self.matrix_height):
+                for j in range(self.matrix_width):
+                    rgb = img[i,j]
+                    offset_canvas.SetPixel(i, j, int(rgb[0] * 255), int(rgb[1] * 255), int(rgb[2] * 255))
+
+            time.sleep(self.dt)
+            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
        
 
 
 # Main function
 if __name__ == "__main__":
-    gravity = Gravity(matrix_height=32, matrix_width=32)
-    gravity.run()
+    gravity = Gravity()
+    if not gravity.process():
+        gravity.print_help()
 
