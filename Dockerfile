@@ -11,4 +11,4 @@ COPY rgb.py .
 EXPOSE 54321
 
 # CMD [ "python3", "-m", "flask", "run", "--host=0.0.0.0" ]
-CMD [ "python3", "rgb.py", "--led-chain=2", "--led-slowdown-gpio=2" ]
+CMD [ "python3", "rgb.py", "--led-chain=2", "--led-slowdown-gpio=2", "--led-pixel-mapper=Rotate:90" ]

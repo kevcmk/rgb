@@ -34,6 +34,10 @@ class Elt:
     def __eq__(self, other):
         return hash(self) == hash(other)
     
+    @property
+    def hsv(self):
+        return colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
+    
 class Gravity(SampleBase):
     def __init__(self, *args, **kwargs):
         super(Gravity, self).__init__(*args, **kwargs)
@@ -41,15 +45,17 @@ class Gravity(SampleBase):
         self.steps = 250
         self.world_height: float = 0.320 # Meters 32x5mm
         self.world_width: float = 0.320 # Meters 32x5mm
-        self.population = 100
+        self.population = 256
         self.particles: Set[Elt] = set()
     
     def populate_particles(self):
-        for i in range(self.population - len(self.particles)):
+        room = random.randint(0, self.population - len(self.particles))
+        for i in range(room):
             self.particles.add(
                 Elt(
-                    y=self.world_height + random.uniform(0, self.world_height), 
-                    x=random.uniform(0, self.world_width)
+                    y=self.world_height, 
+                    x=random.uniform(0, self.world_width),
+                    
                 ) 
             )
 
@@ -72,24 +78,25 @@ class Gravity(SampleBase):
         
     def step(self, dt):
         for elt in self.particles:
-            elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
+            # elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
+            elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
 
     def render(self):
         img = np.zeros((self.matrix_height, self.matrix_width, 3))
         for elt in self.particles:
-            rgb = colorsys.hsv_to_rgb(elt.hue, 1.0, 1.0)
+            
             
             render_y = round(self.matrix_scale * elt.y)
             render_x = round(self.matrix_scale * elt.x)
             
             if 0 <= render_y < self.matrix_height and \
                 0 <= render_x < self.matrix_width:
-                img[render_y,render_x,:] = rgb
+                img[render_y,render_x,:] = elt.hsv
             # Else, skip it
         # Return the vertical flip, origin at the top.
-        return np.flipud(img)
+        return img
     
     def plot(self):
         
@@ -114,7 +121,8 @@ class Gravity(SampleBase):
             self.step(self.dt)
             img = self.render()
 
-            im = ax.imshow(img, animated=True)
+            # Flip because our plot shows zero at the bottom
+            im = ax.imshow(np.flipud(img), animated=True)
             if i == 0:
                 ax.imshow(img)  # show an initial one firstx
             ims.append([im])
@@ -140,14 +148,23 @@ class Gravity(SampleBase):
         log.info("Running...")
         offset_canvas = self.matrix.CreateFrameCanvas()
         while True:
+            
             self.populate_particles()
             self.step(self.dt)
-            img = self.render()
             
-            for i in range(self.matrix_height):
-                for j in range(self.matrix_width):
-                    rgb = img[i,j]
-                    offset_canvas.SetPixel(i, j, int(rgb[0] * 255), int(rgb[1] * 255), int(rgb[2] * 255))
+            # log.info(json.dumps({"matrix_width": self.matrix_width, "matrix_height": self.matrix_height, "img_shape": str(img.shape)}))
+        
+            offset_canvas.Clear()
+            for elt in self.particles:
+                render_y = round(self.matrix_scale * elt.y)
+                render_x = round(self.matrix_scale * elt.x)
+                
+                if 0 <= render_y < self.matrix_height and \
+                    0 <= render_x < self.matrix_width:
+                    rgb = elt.hsv
+                    # Set Pixel takes x, y _tf column, row
+                    offset_canvas.SetPixel(render_x, render_y, int(rgb[0] * 255), int(rgb[1] * 255), int(rgb[2] * 255))
+            
 
             time.sleep(self.dt)
             offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
