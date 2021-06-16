@@ -1,16 +1,17 @@
-import json
-import logging
-import multiprocessing
 import os
 import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+import logging
 import time
 from json import JSONDecodeError
 
-from .context import rgb
+from rgb.imaqt import IMAQT
 
 log = logging.getLogger(__name__)
 
-ima = rgb.imaqt.IMAQT.factory()
+ima = IMAQT.factory()
 hz = 1
 button_topic = "endor" # os.environ["BUTTON_CONTROL_TOPIC"]
 
