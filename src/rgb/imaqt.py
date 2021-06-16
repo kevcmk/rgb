@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import random
+import sys
 from typing import Dict
 
 import paho.mqtt.client as mqtt
@@ -13,7 +14,6 @@ import paho.mqtt.publish as publish
 import paho.mqtt.subscribe as subscribe
 
 log = logging.getLogger(__name__)
-log.setLevel(os.environ.get("MQTT_CLIENT_LOG_LEVEL", "INFO"))
 
 
 class IMAQT():
@@ -29,6 +29,10 @@ class IMAQT():
         self.password = password
         self.client_id = client_id
         self.keep_alive = keep_alive
+        
+        # Because their API eats exceptions, https://github.com/eclipse/paho.mqtt.python/issues/365
+        def on_log(client, userdata, level, buff):
+            log.debug(buff)
 
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
@@ -38,11 +42,13 @@ class IMAQT():
             
         def on_message(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
-            log.debug(f"Message on topic '{msg.topic}': {repr(decoded)}")
+            log.info(f"Unhandled message on topic '{msg.topic}': {decoded}")
 
         self.client = mqtt.Client(client_id=client_id)
+        self.client.on_log = on_log  # https://github.com/eclipse/paho.mqtt.python/issues/365
         self.client.on_connect = on_connect
         self.client.on_message = on_message
+        print(self.client.suppress_exceptions)
         # self.client.will_set("public/roll", generate_payload({"message": "died"}))
         # TODO Set client id
         self.client.username_pw_set(
@@ -77,7 +83,7 @@ class IMAQT():
         })
     
     def connect(self):
-        log.debug(f"Attempting to as {str(self)}...")
+        log.debug(f"Attempting to connect as {str(self)}...")
         self.client.connect(self.server_hostname, self.server_port, self.keep_alive)
 
         def disconnect():
@@ -93,5 +99,5 @@ class IMAQT():
         # handles reconnecting.
         # Other loop*() functions are available that give a threaded interface and a
         # manual interface.
-        log.info(f'Beginning loop-start...')
+        log.info(f'Beginning MQTT loop thread...')
         self.client.loop_start()

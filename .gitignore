@@ -8,3 +8,4 @@ venv
 balena-cli
 scripts/resources/*.img
 scripts/resources/*.zip
+**/__pycache__

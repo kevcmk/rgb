@@ -1,4 +1,4 @@
 {
     "python.pythonPath": "env/bin/python",
-    "python.linting.pylintArgs": ["--rcfile=setup.cfg"]
+    "python.linting.pylintArgs": ["--rcfile=setup.cfg"],
 }
