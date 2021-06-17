@@ -3,6 +3,7 @@
 import random
 import json
 from typing import List, Set, Tuple
+from PIL import Image
 import math
 from random import randrange
 import time
@@ -36,8 +37,9 @@ class Elt:
         return hash(self) == hash(other)
     
     @property
-    def hsv(self):
-        return colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
+    def rgb(self) -> Tuple[int,int,int]:
+        rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
+        return (int(rgb[0] * 255),int(rgb[1] * 255),int(rgb[2] * 255),)
     
 class Gravity():
     def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, hz: float, population: int):
@@ -66,7 +68,8 @@ class Gravity():
             )
 
     def _render(self):
-        img = np.zeros((self.matrix_height, self.matrix_width, 3))
+        # img = np.zeros((self.matrix_height, self.matrix_width, 3))
+        img = Image.new("RGB", (self.matrix_width, self.matrix_height))
         for elt in self.particles:
             
             render_y = round(self.matrix_scale * elt.y)
@@ -74,7 +77,7 @@ class Gravity():
             
             if 0 <= render_y < self.matrix_height and \
                 0 <= render_x < self.matrix_width:
-                img[render_y,render_x,:] = elt.hsv
+                img[render_x][render_y] = elt.rgb
             # Else, skip it
         # Return the vertical flip, origin at the top.
         return img
