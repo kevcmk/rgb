@@ -12,3 +12,7 @@ build:
 		--platform linux/arm64 \
 		--push .
  
+restart:
+	@ssh dietpi@${RGB_HOST} "sudo systemctl restart docker.rgb"
+tail:
+	@ssh dietpi@${RGB_HOST} "sudo journalctl -u docker.rgb -f"
