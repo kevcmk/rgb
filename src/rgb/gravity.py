@@ -3,10 +3,10 @@
 import random
 import json
 from typing import List, Set, Tuple
-from PIL import Image
 import math
 from random import randrange
 import time
+from PIL import Image
 from samplebase import SampleBase
 from dataclasses import dataclass
 import colorsys
@@ -37,9 +37,9 @@ class Elt:
         return hash(self) == hash(other)
     
     @property
-    def rgb(self) -> Tuple[int,int,int]:
+    def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
-        return (int(rgb[0] * 255),int(rgb[1] * 255),int(rgb[2] * 255),)
+        return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
 class Gravity():
     def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, hz: float, population: int):
@@ -67,9 +67,8 @@ class Gravity():
                 ) 
             )
 
-    def _render(self):
-        # img = np.zeros((self.matrix_height, self.matrix_width, 3))
-        img = Image.new("RGB", (self.matrix_width, self.matrix_height))
+    def _render(self) -> Image:
+        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         for elt in self.particles:
             
             render_y = round(self.matrix_scale * elt.y)
@@ -77,12 +76,15 @@ class Gravity():
             
             if 0 <= render_y < self.matrix_height and \
                 0 <= render_x < self.matrix_width:
-                img[render_x][render_y] = elt.rgb
+                rgb = elt.rgb
+                img[render_y,render_x,0] = rgb[0]
+                img[render_y,render_x,1] = rgb[1]
+                img[render_y,render_x,2] = rgb[2]
             # Else, skip it
         # Return the vertical flip, origin at the top.
-        return img
+        return Image.fromarray(img)
 
-    def step(self, dt) -> np.ndarray:
+    def step(self, dt) -> Image:
         self._populate_particles()
         for elt in self.particles:
             # elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
