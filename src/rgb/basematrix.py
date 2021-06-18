@@ -60,7 +60,7 @@ class BaseMatrix(SampleBase):
         while self.receiver_cxn.poll(0):
             value = self.receiver_cxn.recv()
             log.debug(f"Received value {value}")
-            gravity.population = max(0, gravity.population + value) # Prevent less than zero population
+            self.form.population = max(0, gravity.population + value) # Prevent less than zero population
         
         t_start = time.time()
         t_last = t_start
