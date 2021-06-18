@@ -86,7 +86,7 @@ class Gravity():
     def step(self, dt) -> Image.Image:
         self._populate_particles()
         for elt in self.particles:
-            elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
+            elt.vy = elt.vy + 0.5 * -9.8 * (dt ** 2) # -9.8 m/s^2
             # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)
             log.debug(elt)
