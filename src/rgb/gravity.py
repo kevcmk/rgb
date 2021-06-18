@@ -57,8 +57,11 @@ class Gravity():
         return self.matrix_height / float(self.world_height)
 
     def _populate_particles(self):
-        room = random.randint(0, self.population - len(self.particles))
-        for i in range(room):
+        room = self.population - len(self.particles)
+        if room <= 0:
+            return
+        births = random.randint(0, room)
+        for i in range(births):
             self.particles.add(
                 Elt(
                     x=self.world_width / 2,
