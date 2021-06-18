@@ -12,13 +12,10 @@ from rgb import gravity
 hz = 30
 dt = 1/hz
 g = gravity.Gravity(64, 32, 0.320, 0.160, 30, 128)
-#img = g.step(dt)
-
 
 root = Tk()      
 canvas = Canvas(root, width = 300, height = 300)      
 canvas.pack()      
-
 
 while True:
     img = g.step(dt)
