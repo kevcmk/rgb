@@ -61,6 +61,7 @@ class BaseMatrix(SampleBase):
             value = self.receiver_cxn.recv()
             log.debug(f"Received value {value}")
             self.form.population = max(0, self.form.population + value) # Prevent less than zero population
+            log.debug(f"Received updated population to {self.form.population}")
         
         t_start = time.time()
         t_last = t_start
