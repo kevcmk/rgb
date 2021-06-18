@@ -2,9 +2,6 @@
 
 FROM kevinkatz/pi-matrix:latest
 
-ARG GIT_COMMIT=unspecified
-LABEL git_commit=$GIT_COMMIT
-
 WORKDIR /app
 
 COPY requirements.txt .

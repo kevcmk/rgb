@@ -44,7 +44,6 @@ class Elt:
 class Gravity():
     def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, hz: float, population: int):
         self.hz = 60
-        self.steps = 250
         self.matrix_height = matrix_height
         self.matrix_width = matrix_width
         self.world_height = world_height # Meters 32x5mm
@@ -67,7 +66,7 @@ class Gravity():
                 ) 
             )
 
-    def _render(self) -> Image:
+    def _render(self) -> Image.Image:
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         for elt in self.particles:
             
@@ -84,12 +83,13 @@ class Gravity():
         # Return the vertical flip, origin at the top.
         return Image.fromarray(img)
 
-    def step(self, dt) -> Image:
+    def step(self, dt) -> Image.Image:
         self._populate_particles()
         for elt in self.particles:
-            # elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
-            elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
+            elt.vy = elt.vy + (-9.8 * dt) # -9.8 m/s^2
+            # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)
+            log.debug(elt)
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
         return self._render()
 

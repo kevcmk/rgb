@@ -23,7 +23,7 @@ class BaseMatrix(SampleBase):
     def run(self):
         
         if self.args.form == "gravity":
-            self.form = gravity.Gravity(64, 32, 0.320, 0.160, 60, 256)
+            self.form = gravity.Gravity(64, 32, 0.320, 0.160, 60, 1)
         else:
             raise ValueError(f"Unrecognized form: {self.parser.form}")
 
