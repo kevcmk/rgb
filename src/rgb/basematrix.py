@@ -64,7 +64,7 @@ class BaseMatrix(SampleBase):
 
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
-                self.form.population = max(0, self.form.population + value) # Prevent less than zero population
+                self.form.population = max(1, self.form.population + value) # Prevent less than zero population
                 log.info(f"Updated population to {self.form.population}")
                 
             a = time.time()
