@@ -58,7 +58,6 @@ class Gravity():
 
     def _populate_particles(self):
         room = random.randint(0, self.population - len(self.particles))
-        log.info(f"Population is: {self.population}, room is {room}")
         for i in range(room):
             self.particles.add(
                 Elt(

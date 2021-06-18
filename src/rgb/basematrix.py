@@ -57,17 +57,16 @@ class BaseMatrix(SampleBase):
         log.info(f"Running gravity at {hz} Hz...")
         offset_canvas = self.matrix.CreateFrameCanvas()
 
-        while self.receiver_cxn.poll(0):
-            value = self.receiver_cxn.recv()
-            log.debug(f"Received value {value}")
-            self.form.population = max(0, self.form.population + value) # Prevent less than zero population
-            log.debug(f"Received updated population to {self.form.population}")
-        
         t_start = time.time()
         t_last = t_start
         
         while True:
-            
+
+            while self.receiver_cxn.poll(0):
+                value = self.receiver_cxn.recv()
+                self.form.population = max(0, self.form.population + value) # Prevent less than zero population
+                log.info(f"Updated population to {self.form.population}")
+                
             a = time.time()
             matrix = self.form.step(dt)
             b = time.time()
