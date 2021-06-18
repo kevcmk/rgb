@@ -1,6 +1,8 @@
 
 import colorsys
+import json
 import logging
+import multiprocessing
 import os
 import time
 
@@ -9,6 +11,7 @@ import numpy.typing as npt
 from samplebase import SampleBase
 
 import gravity
+import imaqt
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -19,6 +22,30 @@ class BaseMatrix(SampleBase):
         super().__init__(*args, **kwargs)
         self.parser.add_argument("-f", "--form", action="store", help="Extra Kevin argument. The form of LED to take.")
         self.parser.add_argument("--max-fps", action="store", help="Maximum frame rate")
+        
+        #            ⬅
+        (self.receiver_cxn, self.sender_cxn) = multiprocessing.Pipe(duplex=False)
+
+        def button_callback(client, userdata, msg):
+            decoded = msg.payload.decode('utf-8')
+            log.debug(f"Button callback invoked with message: {decoded}")
+            
+            o = json.loads(decoded)
+            
+            if o["index"] == "0" and o["state"] == "on":
+                log.info("")
+                self.sender_cxn.send(-1)
+            elif o["index"] == "1" and o["state"] == "on":
+                log.info("Got button 1 press")
+                self.receiver_cxn.send(1)
+            else:
+                log.warning(f"Couldn't process {o}")    
+        
+        ima = imaqt.IMAQT.factory()
+        button_topic = os.environ["CONTROL_TOPIC"]
+        ima.client.message_callback_add(button_topic, button_callback)
+        ima.connect()
+        ima.client.subscribe(button_topic)
 
     def run(self):
         
@@ -31,7 +58,11 @@ class BaseMatrix(SampleBase):
         dt = 1 / hz # Seconds
         log.info(f"Running gravity at {hz} Hz...")
         offset_canvas = self.matrix.CreateFrameCanvas()
-        i = 0
+
+        while self.receiver_cxn.poll(0):
+            value = self.receiver_cxn.recv()
+            log.debug(f"Received value {value}")
+            gravity.population = max(0, gravity.population + value) # Prevent less than zero population
         
         t_start = time.time()
         t_last = t_start

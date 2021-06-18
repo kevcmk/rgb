@@ -31,11 +31,7 @@ def button_callback(client, userdata, msg):
         log.warning(f"Couldn't process {o}")    
 
 
-ima = IMAQT.factory()
-button_topic = "black" # os.environ["BUTTON_CONTROL_TOPIC"]
-ima.client.message_callback_add(button_topic, button_callback)
-ima.connect()
-ima.client.subscribe(button_topic)
+
 
 acc = 0
 while True:
