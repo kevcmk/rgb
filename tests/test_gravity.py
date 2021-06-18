@@ -22,10 +22,10 @@ canvas.pack()
 
 while True:
     img = g.step(dt)
+    img_larger = img.resize((img.width * 4, img.height * 4),resample=0)
     # img = Image.open("/Users/katz/Pictures/unnamed_b.png")
     # If this image is not here, it will be garbage collected (and will not appear)
-    pi = ImageTk.PhotoImage(img)
-    print(".")
+    pi = ImageTk.PhotoImage(img_larger)
     canvas.create_image(0,0, anchor=NW, image=pi)      
     canvas.update()
     time.sleep(dt)
