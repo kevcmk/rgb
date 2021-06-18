@@ -63,7 +63,7 @@ class Gravity():
                 Elt(
                     x=self.world_width / 2,
                     y=self.world_height, 
-                    vx=random.uniform(-1, 1),
+                    vx=random.uniform(-0.002, 0.002),
                     vy=0
                 )
             )
@@ -88,8 +88,18 @@ class Gravity():
     def step(self, dt) -> Image.Image:
         self._populate_particles()
         for elt in self.particles:
+            elt.x = elt.x + elt.vx
+
+            if elt.x > self.world_width:
+                elt.x = self.world_width - (elt.x - self.world_width)
+                elt.vx = -elt.vx
+            elif elt.x < 0:
+                elt.x = -elt.x
+                elt.vx = -elt.vx
+
             elt.vy = elt.vy + 0.5 * -9.8 * (dt ** 2) # -9.8 m/s^2
             # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
+            # elt.vy = elt.vy + (-0.08 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)
             log.debug(elt)
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
