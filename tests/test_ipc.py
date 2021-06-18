@@ -20,7 +20,7 @@ def button_callback(client, userdata, msg):
     log.debug(f"Button callback invoked with message: {decoded}")
     
     o = json.loads(decoded)
-    
+
     if o["index"] == "0" and o["state"] == "on":
         log.info("")
         sender_cxn.send(-1)

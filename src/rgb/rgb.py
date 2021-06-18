@@ -66,8 +66,7 @@ class Rgb(SampleBase):
             for elt in elts:
                 
                 if elt.alive:
-                    rgb = colorsys.hsv_to_rgb(elt.hue, 1.0, elt.luminance)
-                    # print(elt)
+                    rgb = colorsys.hsv_to_rgb(elt.hue, 1.0, elt.luminance) 
                     offset_canvas.SetPixel(
                         int(self.matrix.width * elt.x), 
                         int(self.matrix.height * elt.y), 

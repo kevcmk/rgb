@@ -7,7 +7,6 @@ import math
 from random import randrange
 import time
 from PIL import Image
-from samplebase import SampleBase
 from dataclasses import dataclass
 import colorsys
 import logging
@@ -21,14 +20,15 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 @dataclass
 class Elt:
-    def __init__(self, y, x):
-        self.y: float = y
+    def __init__(self, x, y, vx, vy):
         self.x: float = x
-        self.vy: float = 0
+        self.y: float = y
+        self.vx: float = vx
+        self.vy: float = vy
         self.hue: float = random.random()
         
     def __str__(self):
-        return json.dumps({key: getattr(self, key) for key in ["x","y","vy"]})
+        return json.dumps({key: getattr(self, key) for key in ["x","y","vx","vy"]})
 
     def __hash__(self):
         return hash((self.x, self.y, self.hue))
@@ -61,9 +61,11 @@ class Gravity():
         for i in range(room):
             self.particles.add(
                 Elt(
+                    x=self.world_width / 2,
                     y=self.world_height, 
-                    x=random.uniform(0, self.world_width),
-                ) 
+                    vx=random.uniform(-1, 1),
+                    vy=0
+                )
             )
 
     def _render(self) -> Image.Image:
