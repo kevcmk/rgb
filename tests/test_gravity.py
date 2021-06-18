@@ -21,8 +21,8 @@ canvas.pack()
 
 
 while True:
-    #img = g.step(dt)
-    img = Image.open("/Users/katz/Pictures/unnamed_b.png")
+    img = g.step(dt)
+    # img = Image.open("/Users/katz/Pictures/unnamed_b.png")
     pi = ImageTk.PhotoImage(img)
     print(".")
     canvas.create_image(32,64, anchor=NW, image=pi)      
