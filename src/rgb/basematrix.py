@@ -33,13 +33,11 @@ class BaseMatrix(SampleBase):
             o = json.loads(decoded)
             
             if o["index"] == "0" and o["state"] == "on":
-                log.info("")
+                log.info("Got button 0 press")
                 self.sender_cxn.send(-1)
             elif o["index"] == "1" and o["state"] == "on":
                 log.info("Got button 1 press")
-                self.receiver_cxn.send(1)
-            else:
-                log.warning(f"Couldn't process {o}")    
+                self.sender_cxn.send(1)
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
