@@ -18,7 +18,7 @@ import timer
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-class Baseimg(SampleBase):
+class BaseMatrix(SampleBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -59,7 +59,7 @@ class Baseimg(SampleBase):
         hz = int(self.args.max_fps)
         dt = 1 / hz # Seconds
         log.info(f"Running gravity at {hz} Hz...")
-        offset_canvas = self.img.CreateFrameCanvas()
+        offset_canvas = self.matrix.CreateFrameCanvas()
 
         t_start = time.time()
         t_last = t_start
@@ -78,14 +78,14 @@ class Baseimg(SampleBase):
                         self.form.t_stop = None
                     
             a = time.time()
-            img = self.form.step(dt)
+            matrix = self.form.step(dt)
             b = time.time()
-            # for i,j,_ in np.ndindex(img.shape):
-            #     offset_canvas.SetPixel(j, i, int(img[i,j][0] * 255), int(img[i,j][1] * 255), int(img[i,j][2] * 255))
-            offset_canvas.SetImage(img)
+            # for i,j,_ in np.ndindex(matrix.shape):
+            #     offset_canvas.SetPixel(j, i, int(matrix[i,j][0] * 255), int(matrix[i,j][1] * 255), int(matrix[i,j][2] * 255))
+            offset_canvas.SetImage(matrix)
             c = time.time()
             log.debug(f"{b - a} step, {c - b} step")
-            offset_canvas = self.img.SwapOnVSync(offset_canvas)
+            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
             
             now = time.time()
             t_last, wait_time = now, dt - (now - t_last)
@@ -97,7 +97,7 @@ class Baseimg(SampleBase):
 
         
 if __name__ == "__main__":
-    b = Baseimg()
+    b = BaseMatrix()
     if not b.process():
         b.print_help()
 
