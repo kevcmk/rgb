@@ -84,9 +84,9 @@ class BaseMatrix(SampleBase):
                     elif value == -1:
                         self.form.t_stop = None
                     elif value == True:
-                        self.form.show = True
+                        self.form.enable_visual = True
                     elif value == False:
-                        self.form.show = False
+                        self.form.enable_visual = False
                     
             a = time.time()
             matrix = self.form.step(dt)
