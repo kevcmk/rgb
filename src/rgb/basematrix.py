@@ -1,5 +1,6 @@
 
 import colorsys
+from datetime import timedelta
 import json
 import logging
 import multiprocessing
@@ -12,11 +13,12 @@ from samplebase import SampleBase
 
 import gravity
 import imaqt
+import timer
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-class BaseMatrix(SampleBase):
+class Baseimg(SampleBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,13 +51,15 @@ class BaseMatrix(SampleBase):
         
         if self.args.form == "gravity":
             self.form = gravity.Gravity(64, 32, 0.320, 0.160, 60, 1)
+        if self.args.form == "timer":
+            self.form = timer.Timer(64, 32)
         else:
             raise ValueError(f"Unrecognized form: {self.parser.form}")
 
         hz = int(self.args.max_fps)
         dt = 1 / hz # Seconds
         log.info(f"Running gravity at {hz} Hz...")
-        offset_canvas = self.matrix.CreateFrameCanvas()
+        offset_canvas = self.img.CreateFrameCanvas()
 
         t_start = time.time()
         t_last = t_start
@@ -64,18 +68,24 @@ class BaseMatrix(SampleBase):
 
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
-                self.form.population = max(1, self.form.population + value) # Prevent less than zero population
-                log.info(f"Updated population to {self.form.population}")
-                
+                if isinstance(self.form, gravity.Gravity) and isinstance(value, int):
+                    self.form.population = max(1, self.form.population + value) # Prevent less than zero population
+                    log.info(f"Updated population to {self.form.population}")
+                elif isinstance(self.form, timer.Timer) and isinstance(value, str):
+                    if value == "+1":
+                        self.form.t_stop = self.form.t_stop + datetime.timedelta(minutes=1)
+                    elif value == "reset":
+                        self.form.t_stop = None
+                    
             a = time.time()
-            matrix = self.form.step(dt)
+            img = self.form.step(dt)
             b = time.time()
-            # for i,j,_ in np.ndindex(matrix.shape):
-            #     offset_canvas.SetPixel(j, i, int(matrix[i,j][0] * 255), int(matrix[i,j][1] * 255), int(matrix[i,j][2] * 255))
-            offset_canvas.SetImage(matrix)
+            # for i,j,_ in np.ndindex(img.shape):
+            #     offset_canvas.SetPixel(j, i, int(img[i,j][0] * 255), int(img[i,j][1] * 255), int(img[i,j][2] * 255))
+            offset_canvas.SetImage(img)
             c = time.time()
             log.debug(f"{b - a} step, {c - b} step")
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+            offset_canvas = self.img.SwapOnVSync(offset_canvas)
             
             now = time.time()
             t_last, wait_time = now, dt - (now - t_last)
@@ -87,7 +97,7 @@ class BaseMatrix(SampleBase):
 
         
 if __name__ == "__main__":
-    b = BaseMatrix()
+    b = Baseimg()
     if not b.process():
         b.print_help()
 
