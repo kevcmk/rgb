@@ -73,7 +73,7 @@ class BaseMatrix(SampleBase):
                     
                 elif isinstance(self.form, timer.Timer):
                     if value == 1:
-                        self.form.t_stop = self.form.t_stop + datetime.timedelta(minutes=1)
+                        self.form.t_stop = (self.form.t_stop or datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
                     elif value == -1:
                         self.form.t_stop = None
                     
