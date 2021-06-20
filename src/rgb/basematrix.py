@@ -42,10 +42,10 @@ class BaseMatrix(SampleBase):
                 self.sender_cxn.send(1)
             elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "off":
                 log.info("Got switch off")
-                self.sender_cxn.send(False)
+                self.sender_cxn.send("on")
             elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "on":
                 log.info("Got switch on")
-                self.sender_cxn.send(True)
+                self.sender_cxn.send("off")
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
@@ -74,18 +74,17 @@ class BaseMatrix(SampleBase):
 
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
-                log.info("Received value {value}")
+                log.info(f"Received value {value}")
                 if isinstance(self.form, gravity.Gravity):
                     self.form.population = max(1, self.form.population + value) # Prevent less than zero population
-                    
                 elif isinstance(self.form, timer.Timer):
                     if value == 1:
                         self.form.t_stop = (self.form.t_stop or datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
                     elif value == -1:
                         self.form.t_stop = None
-                    elif value == True:
+                    elif value == "on":
                         self.form.enable_visual = True
-                    elif value == False:
+                    elif value == "off":
                         self.form.enable_visual = False
                     
             a = time.time()

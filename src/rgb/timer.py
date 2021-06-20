@@ -26,7 +26,7 @@ class Timer():
         self.matrix_width = matrix_width
         self.t_stop: Optional[datetime.datetime] = None
         self.font = ImageFont.truetype("rgb/DejaVuSans.ttf", 14)
-        self.enable_visual = False
+        self.enable_visual = True
     
     @staticmethod
     def render_dt(dt: datetime.timedelta) -> str:
