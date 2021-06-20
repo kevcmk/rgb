@@ -6,7 +6,7 @@ import logging
 import multiprocessing
 import os
 import time
-
+import datetime
 import numpy as np
 import numpy.typing as npt
 from samplebase import SampleBase
@@ -68,13 +68,13 @@ class BaseMatrix(SampleBase):
 
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
-                if isinstance(self.form, gravity.Gravity) and isinstance(value, int):
+                if isinstance(self.form, gravity.Gravity):
                     self.form.population = max(1, self.form.population + value) # Prevent less than zero population
-                    log.info(f"Updated population to {self.form.population}")
-                elif isinstance(self.form, timer.Timer) and isinstance(value, str):
-                    if value == "+1":
+                    
+                elif isinstance(self.form, timer.Timer):
+                    if value == 1:
                         self.form.t_stop = self.form.t_stop + datetime.timedelta(minutes=1)
-                    elif value == "reset":
+                    elif value == -1:
                         self.form.t_stop = None
                     
             a = time.time()
