@@ -34,12 +34,17 @@ class BaseMatrix(SampleBase):
             
             o = json.loads(decoded)
             
-            if o["index"] == "0" and o["state"] == "on":
+            if o["message"] == "button" and o["index"] == "0" and o["state"] == "on":
                 log.info("Got button 0 press")
                 self.sender_cxn.send(-1)
-            elif o["index"] == "1" and o["state"] == "on":
+            elif o["message"] == "button" and o["index"] == "1" and o["state"] == "on":
                 log.info("Got button 1 press")
                 self.sender_cxn.send(1)
+            elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "off":
+                log.info("Got button 1 press")
+                self.sender_cxn.send(False)
+            elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "on":
+                self.sender_cxn.send(True)
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
@@ -76,6 +81,10 @@ class BaseMatrix(SampleBase):
                         self.form.t_stop = (self.form.t_stop or datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
                     elif value == -1:
                         self.form.t_stop = None
+                    elif value == True:
+                        self.form.show = True
+                    elif value == False:
+                        self.form.show = False
                     
             a = time.time()
             matrix = self.form.step(dt)

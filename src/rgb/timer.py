@@ -26,6 +26,7 @@ class Timer():
         self.matrix_width = matrix_width
         self.t_stop: Optional[datetime.datetime] = None
         self.font = ImageFont.truetype("rgb/DejaVuSans.ttf", 14)
+        self.show = False
     
     @staticmethod
     def render_dt(dt: datetime.timedelta) -> str:
@@ -33,15 +34,24 @@ class Timer():
 
     def _render(self) -> Image.Image:
         im = Image.new("RGB", (self.matrix_width, self.matrix_height))
-        if self.t_stop:
-            dt_text = Timer.render_dt(self.t_stop - datetime.datetime.utcnow())
-            draw_context = ImageDraw.Draw(im)
-            draw_context.text((16,16), 
-                text=dt_text, 
-                fill=(255, 0, 0), 
-                anchor="mm",
-                font=self.font
-            )
+        draw_context = ImageDraw.Draw(im)
+        
+        if self.t_stop and self.show:
+            now = datetime.datetime.utcnow()
+            if self.t_stop < now:
+                if now - self.t_stop < datetime.timedelta(minutes=1):
+                    color = (255, 165, 0)
+                else:
+                    color = (255, 0, 0)
+                draw_context.rectangle([(0,0),im.size], fill = color)
+            else:
+                dt_text = Timer.render_dt(self.t_stop - now)
+                draw_context.text((16,16), 
+                    text=dt_text, 
+                    fill=(255, 0, 0), 
+                    anchor="mm",
+                    font=self.font
+                )
         return im
 
     def step(self, dt) -> Image.Image:
