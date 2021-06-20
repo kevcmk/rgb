@@ -41,9 +41,10 @@ class BaseMatrix(SampleBase):
                 log.info("Got button 1 press")
                 self.sender_cxn.send(1)
             elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "off":
-                log.info("Got button 1 press")
+                log.info("Got switch off")
                 self.sender_cxn.send(False)
             elif o["message"] == "switch" and o["index"] == "0" and o["state"] == "on":
+                log.info("Got switch on")
                 self.sender_cxn.send(True)
         
         ima = imaqt.IMAQT.factory()
