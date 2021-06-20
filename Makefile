@@ -3,6 +3,7 @@ DOCKERFILE := gravity.Dockerfile
 TAG        := $$(git log -1 --format=%h)
 IMG        := "${NAME}:${TAG}"
 LATEST     := "${NAME}:latest"
+RGB_HOST   := "cyan.local"
  
 build:
 	@docker --debug buildx build \
