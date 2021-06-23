@@ -54,17 +54,16 @@ class BaseMatrix(SampleBase):
         ima.client.subscribe(button_topic)
 
     def run(self):
+        self.orbit = orbit.Orbit(64,32, 0.320, 0.160)
+        self.gravity = gravity.Gravity(64, 32, 0.320, 0.160, 60, 1)
+        self.timer = timer.Timer(64, 32)
+        #if self.args.form == "gravity":
+        self.form = self.gravity
         
-        if self.args.form == "gravity":
-            self.form = gravity.Gravity(64, 32, 0.320, 0.160, 60, 1)
-        if self.args.form == "timer":
-            self.form = timer.Timer(64, 32)
-        else:
-            raise ValueError(f"Unrecognized form: {self.parser.form}")
-
+        
         hz = int(self.args.max_fps)
         dt = 1 / hz # Seconds
-        log.info(f"Running gravity at {hz} Hz...")
+        log.info(f"Running {self.args.form} at {hz} Hz...")
         offset_canvas = self.matrix.CreateFrameCanvas()
 
         t_start = time.time()
@@ -75,17 +74,18 @@ class BaseMatrix(SampleBase):
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
                 log.info(f"Received value {value}")
-                if isinstance(self.form, gravity.Gravity):
+                if value == "on":
+                    self.form = self.timer
+                elif value == "off":
+                    self.form = self.gravity
+                elif isinstance(self.form, gravity.Gravity):
                     self.form.population = max(1, self.form.population + value) # Prevent less than zero population
                 elif isinstance(self.form, timer.Timer):
                     if value == 1:
                         self.form.t_stop = (self.form.t_stop or datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
                     elif value == -1:
                         self.form.t_stop = None
-                    elif value == "on":
-                        self.form.enable_visual = True
-                    elif value == "off":
-                        self.form.enable_visual = False
+                    
                     
             a = time.time()
             matrix = self.form.step(dt)

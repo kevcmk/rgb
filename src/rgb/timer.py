@@ -35,8 +35,8 @@ class Timer():
     def _render(self) -> Image.Image:
         im = Image.new("RGB", (self.matrix_width, self.matrix_height))
         draw_context = ImageDraw.Draw(im)
-        log.debug(f"t_stop {self.t_stop}, enable_visual: {self.enable_visual}")
-        if self.t_stop is not None and self.enable_visual:
+        log.debug(f"t_stop {self.t_stop}")
+        if self.t_stop is not None:
             now = datetime.datetime.utcnow()
             if self.t_stop < now:
                 if now - self.t_stop < datetime.timedelta(minutes=1):
