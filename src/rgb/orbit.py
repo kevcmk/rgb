@@ -19,6 +19,14 @@ import numpy.typing as npt
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
+EARTH_ORBITAL_VELOCITY_KMS = 2.978e4
+SUN_MASS_KILOGRAMS = 1.989e30
+EARTH_MASS_KILOGRAMS = 5.972e24
+EARTH_ORBIT_METERS = 1.496e11
+GRAVITATIONAL_CONSTANT = 6.67408e-11
+
+
+
 @dataclass
 class Elt:
     def __init__(self, x, y, vx, vy, mass):
@@ -44,16 +52,17 @@ class Elt:
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
 class Orbit():
-    def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, hz: float, ffw: float):
+    def __init__(self, matrix_height: int, matrix_width: int, hz: float, ffw: float):
         self.hz = hz
         self.ffw = ffw
         self.matrix_height = matrix_height
         self.matrix_width = matrix_width
-        self.world_height = world_height # Meters 32x5mm
-        self.world_width = world_width # Meters 32x5mm
+        h_to_w_ratio = (self.matrix_height / self.matrix_width) # h:w ratio
+        self.world_width = EARTH_ORBIT_METERS
+        self.world_height = EARTH_ORBIT_METERS * h_to_w_ratio 
         self.bodies: Set[Elt] = {
-            Elt(x=self.world_width / 2, y = self.world_height / 4, vx = 0, vy = 0, mass=1.989e30),
-            Elt(x=self.world_width / 2, y=0, vx=30000, vy=0, mass = 5.972e24) # Earth is 333000
+            Elt(x=self.world_width / 2, y = self.world_height / 4, vx = 0, vy = 0, mass=SUN_MASS_KILOGRAMS),
+            Elt(x=self.world_width / 2, y=0, vx=EARTH_ORBITAL_VELOCITY_KMS, vy=0, mass = EARTH_MASS_KILOGRAMS) # Earth is 333000
         }
     
     @property
@@ -87,17 +96,30 @@ class Orbit():
                 if a == b:
                     continue
                 distance_squared = (a.x - b.x) ** 2 + (a.y - b.y) ** 2
-                f = 6.67408e-11 * a.mass * b.mass / distance_squared
+                f = GRAVITATIONAL_CONSTANT * a.mass * b.mass / distance_squared
                 
-                hypotenuse = math.sqrt(distance_squared)
-                theta = math.atan2(a.y - b.y, a.x - b.x)
-                ax = math.sin(theta) * f / a.mass
-                ay = math.cos(theta) * f / a.mass
-                a.vx += ax
-                a.vy += ay
-                a.x += a.vx * (dt * self.ffw)
-                a.y += a.vy * (dt * self.ffw)
+                theta = math.atan2(b.y - a.y, b.x - a.x)
+                ax = math.cos(theta) * f / a.mass
+                ay = math.sin(theta) * f / a.mass
+                actual_elapsed_time = dt * self.ffw
+                a.vx += ax * actual_elapsed_time
+                a.vy += ay * actual_elapsed_time
+                a.x += a.vx * actual_elapsed_time
+                a.y += a.vy * actual_elapsed_time
+
         return self._render()
 
     
-    
+"""
+In [8]: math.atan2(1.414, 1.414) / math.pi
+Out[8]: 0.25
+
+In [9]: math.atan2(-1.414, 1.414) / math.pi
+Out[9]: -0.25
+
+In [10]: math.atan2(-1.414, -1.414) / math.pi
+Out[10]: -0.75
+
+In [11]: math.atan2(1.414, -1.414) / math.pi
+Out[11]: 0.75
+"""
