@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 
 from messages import Dial
-from utilties import constrain
+from utilities import constrain
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
