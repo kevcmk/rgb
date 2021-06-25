@@ -16,6 +16,8 @@ import math
 import numpy as np
 import numpy.typing as npt
 
+from messages import Dial
+
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
@@ -24,6 +26,8 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 # Source https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html
 # Source https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
+
+MARS_APHELION_METERS = 2.49229e11
 
 EARTH_PERIHELION_VELOCITY_MS = 3.029e4
 MOON_PERIGEE_VELOCITY_MS = 1.082e3
@@ -42,8 +46,9 @@ GRAVITATIONAL_CONSTANT = 6.67408e-11
 
 @dataclass
 class Body:
-    def __init__(self, name, x, y, vx, vy, mass):
+    def __init__(self, name, color, x, y, vx, vy, mass):
         self.name: str = name
+        self.color: Tuple[int,int,int] = color
         self.x: float = x
         self.y: float = y
         self.vx: float = vx
@@ -63,27 +68,44 @@ class Body:
     @property
     def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
-        return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
+        return (np.uint8(self.color[0]),np.uint8(self.color[1]),np.uint8(self.color[2]))
     
 class Orbit():
-    def __init__(self, matrix_height: int, matrix_width: int, hz: float, ffw: float):
-        self.hz = hz
-        self.ffw = ffw
+    def __init__(self, matrix_height: int, matrix_width: int, fast_forward_scale: float):
+        self.fast_forward_scale = fast_forward_scale
         self.matrix_height = matrix_height
         self.matrix_width = matrix_width
         h_to_w_ratio = (self.matrix_height / self.matrix_width) # h:w ratio
-        self.world_width = MARS_PERIHELION_METERS * 2
+        self.world_width = MARS_APHELION_METERS * 2
         self.world_height = self.world_width * h_to_w_ratio 
-        sun = Body(name="Sun", x=self.world_width / 2, y = self.world_height / 4, vx = 0, vy = 0, mass=SUN_MASS_KILOGRAMS)
-        earth = Body(name="Earth", x=self.world_width / 2, y=sun.y - EARTH_PERIHELION_METERS, vx=EARTH_PERIHELION_VELOCITY_MS, vy=0, mass = EARTH_MASS_KILOGRAMS)
-        mars = Body(name="Mars", x=self.world_width / 2, y=sun.y + MARS_PERIHELION_METERS, vx=-MARS_PERIHELION_VELOCITY_MS, vy=0, mass = MARS_MASS_KILOGRAMS)
-        moon = Body(name="Moon", x=self.world_width / 2, y = earth.y - MOON_PERIGEE_METERS, vx = earth.vx + MOON_PERIGEE_VELOCITY_MS, vy = 0, mass=MOON_MASS_KILOGRAMS)
+        sun = Body(name="Sun", color=(255,255,0), x=self.world_width / 2, y = self.world_height / 4, vx = 0, vy = 0, mass=SUN_MASS_KILOGRAMS)
+        earth = Body(name="Earth", color=(64,64,255), x=self.world_width / 2, y=sun.y - EARTH_PERIHELION_METERS, vx=EARTH_PERIHELION_VELOCITY_MS, vy=0, mass = EARTH_MASS_KILOGRAMS)
+        mars = Body(name="Mars", color=(255,64,0), x=self.world_width / 2, y=sun.y + MARS_PERIHELION_METERS, vx=-MARS_PERIHELION_VELOCITY_MS, vy=0, mass = MARS_MASS_KILOGRAMS)
+        moon = Body(name="Moon", color=(180,180,180), x=self.world_width / 2, y = earth.y + MOON_PERIGEE_METERS, vx = earth.vx + MOON_PERIGEE_VELOCITY_MS, vy = 0, mass=MOON_MASS_KILOGRAMS)
         self.bodies: Set[Body] = {
             earth,
             mars,
             moon,
             sun,
         }
+                 
+        self.handlers = {
+            "Dial": {
+                0: lambda state: self.adjust_ffw(state),
+            }
+        }
+
+    def adjust_ffw(self, state):
+        """
+        Logarithmic scale timespan for dial 
+        
+        State 0.0 := 1 second per second 
+        State 1.0 := 1 year per second
+        """
+        assert 0 <= state <= 1        
+        # In [12]: math.log(60 * 60 * 24 * 365)
+        # Out[12]: 17.26664030837464
+        self.ffw = math.exp(state * 17.26664)
     
     @property
     def matrix_scale(self) -> float:
@@ -96,8 +118,6 @@ class Orbit():
             
             render_x = round(self.matrix_scale * a.x)
             render_y = round(self.matrix_scale * a.y)
-            log.info((a.name, render_x, render_y))
-            
             if 0 <= render_y < self.matrix_height and \
                 0 <= render_x < self.matrix_width:
                 rgb = a.rgb
@@ -111,27 +131,22 @@ class Orbit():
 
     def step(self, dt) -> Image.Image:
         for a in self.bodies:
-            log.debug(a)
+            # log.debug(a)
             fxs = []
             fys = []
             for b in self.bodies:
-            
                 if a == b:
                     continue
                 distance_squared = (a.x - b.x) ** 2 + (a.y - b.y) ** 2
                 f = GRAVITATIONAL_CONSTANT * a.mass * b.mass / distance_squared
-                b_right_of_a = b.x > a.x 
-                b_above_a = b.y > a.y 
-            
                 theta = math.atan2(b.y - a.y, b.x - a.x)
                 fxs.append(math.cos(theta) * f)
                 fys.append(math.sin(theta) * f)
-            
             fx = sum(fxs)
             fy = sum(fys)
             ax = fx / a.mass
             ay = fy / a.mass
-            actual_elapsed_time = dt * self.ffw
+            actual_elapsed_time = dt * self.fast_forward_scale
             a.vx += ax * actual_elapsed_time
             a.vy += ay * actual_elapsed_time
             a.x += a.vx * actual_elapsed_time

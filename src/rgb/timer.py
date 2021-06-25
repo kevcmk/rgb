@@ -10,11 +10,13 @@ import random
 import time
 from dataclasses import dataclass
 from random import randrange
-from typing import List, Set, Tuple, Optional
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
+
+from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

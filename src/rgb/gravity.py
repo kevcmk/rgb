@@ -15,6 +15,8 @@ import os
 import numpy as np
 import numpy.typing as npt
 
+from messages import Dial
+
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
@@ -42,14 +44,33 @@ class Elt:
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
 class Gravity():
-    def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, hz: float, population: int):
-        self.hz = 60
+    def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, population: int):
         self.matrix_height = matrix_height
         self.matrix_width = matrix_width
         self.world_height = world_height # Meters 32x5mm
         self.world_width = world_width # Meters 32x5mm
         self.population = population
+        self.gravitational_constant = 0.08
         self.particles: Set[Elt] = set()
+          
+        self.handlers = {
+            "Dial": {
+                0: lambda state: self.adjust_gravitational_constant(state),
+            }
+        }
+
+    def adjust_gravitational_constant(self, state):
+        """
+        Logarithmic scale timespan for dial 
+        
+        State 0.0 := g = 0.05 m/s^2
+        State 1.0 := g = 12 m/s^2
+        """
+        assert 0 <= state <= 1        
+        # math.exp(0) = 1.0
+        # math.exp(2.5) = 12.18
+        
+        self.gravitational_constant = math.exp(2.5 * state) - 0.95
     
     @property
     def matrix_scale(self) -> float:
@@ -100,7 +121,14 @@ class Gravity():
                 elt.x = -elt.x
                 elt.vx = -elt.vx
 
-            elt.vy = elt.vy + 0.5 * -9.8 * (dt ** 2) # -9.8 m/s^2
+            
+            
+            # This one looks fluttery
+            # elt.vy = elt.vy + 0.5 * -9.8 * (dt ** 2) # -9.8 m/s^2
+            
+            # It approximates to this: with g = 0.08
+            elt.vy += dt * self.gravitational_constant
+
             # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             # elt.vy = elt.vy + (-0.08 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)

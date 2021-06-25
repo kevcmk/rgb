@@ -9,13 +9,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from rgb import orbit
 
-SECONDS_PER_MONTH = 86400 * 30 * 4 # Using this allows us to use 1 month per second
+SECONDS_PER_MONTH = 86400 * 30 # Using this allows us to use 1 month per second
 hz = 60
 dt = 1/hz
 canvas_scale = 6
 matrix_height = 64
 matrix_width = 32
-g = orbit.Orbit(matrix_width=32, matrix_height=64, hz=hz, ffw=SECONDS_PER_MONTH)
+g = orbit.Orbit(matrix_width=32, matrix_height=64, ffw=1)
 
 root = Tk()      
 canvas = Canvas(root, width = matrix_width * canvas_scale, height = matrix_height * canvas_scale)      
