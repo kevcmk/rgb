@@ -106,15 +106,18 @@ class BaseMatrix(SampleBase):
 
             while self.receiver_cxn.poll(0):
                 value = self.receiver_cxn.recv()
-                log.info(f"Received value {value}")
-
+                log.info(f"Received value: {value}")
+                
+                message_type = type(value).__name__
+                index = value.index
+                state = value.state
+                
+                log.info(f"{message_type} -> {index}, {state}")        
+                    
                 for target in (self, self.form):
-                    try:    
-                        log.info(f"{value.__name__} -> {value.index}, {isinstance(value, Button) or isinstance(value, Switch) or isinstance(value, Dial)}")        
-                        if isinstance(value, Button) or isinstance(value, Switch) or isinstance(value, Dial):
-                            self.form.handlers[value.__name__][value.index].apply(value.statue)
-                            
-                    except AttributeError as e:
+                    try:            
+                        target.handlers[message_type][index](state)
+                    except KeyError as e:
                         log.debug(f"No handler for {value} on {target}")
                         continue
                     else: 

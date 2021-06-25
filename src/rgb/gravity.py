@@ -16,6 +16,7 @@ import numpy as np
 import numpy.typing as npt
 
 from messages import Dial
+from utilties import constrain
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -58,7 +59,7 @@ class Gravity():
                 0: lambda state: self.adjust_gravitational_constant(state),
             }
         }
-
+    
     def adjust_gravitational_constant(self, state):
         """
         Logarithmic scale timespan for dial 
@@ -66,11 +67,11 @@ class Gravity():
         State 0.0 := g = 0.05 m/s^2
         State 1.0 := g = 12 m/s^2
         """
-        assert 0 <= state <= 1        
+        constrained = constrain(state, 0.0, 1.0)
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         
-        self.gravitational_constant = math.exp(2.5 * state) - 0.95
+        self.gravitational_constant = math.exp(2.5 * constrained) - 0.95
     
     @property
     def matrix_scale(self) -> float:

@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 from messages import Dial
+from utilities import constrain
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -102,10 +103,10 @@ class Orbit():
         State 0.0 := 1 second per second 
         State 1.0 := 1 year per second
         """
-        assert 0 <= state <= 1        
+        constrained = constrain(state, 0.0, 1.0) 
         # In [12]: math.log(60 * 60 * 24 * 365)
         # Out[12]: 17.26664030837464
-        self.ffw = math.exp(state * 17.26664)
+        self.ffw = math.exp(constrained * 17.26664)
     
     @property
     def matrix_scale(self) -> float:
