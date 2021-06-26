@@ -72,10 +72,9 @@ class Body:
         return (np.uint8(self.color[0]),np.uint8(self.color[1]),np.uint8(self.color[2]))
     
 class Orbit():
-    def __init__(self, matrix_height: int, matrix_width: int, fast_forward_scale: float):
+    def __init__(self, dimensions: Tuple[int, int], fast_forward_scale: float):
         self.fast_forward_scale = fast_forward_scale
-        self.matrix_height = matrix_height
-        self.matrix_width = matrix_width
+        (self.matrix_width, self.matrix_height) = dimensions
         h_to_w_ratio = (self.matrix_height / self.matrix_width) # h:w ratio
         self.world_width = MARS_APHELION_METERS * 2
         self.world_height = self.world_width * h_to_w_ratio 
@@ -106,7 +105,8 @@ class Orbit():
         constrained = constrain(state, 0.0, 1.0) 
         # In [12]: math.log(60 * 60 * 24 * 365)
         # Out[12]: 17.26664030837464
-        self.ffw = math.exp(constrained * 17.26664)
+        self.fast_forward_scale = math.exp(constrained * 17.26664)
+        log.debug(f"Adjusting orbit's .ffw state: {state}, constrained {constrained}, .ffw {self.fast_forward_scale}")
     
     @property
     def matrix_scale(self) -> float:

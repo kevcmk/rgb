@@ -41,9 +41,13 @@ class BaseMatrix(SampleBase):
         super().__init__(*args, **kwargs)
         self.parser.add_argument("-f", "--form", action="store", help="Extra Kevin argument. The form of LED to take.")
         self.parser.add_argument("--max-fps", action="store", help="Maximum frame rate")
+
+        self.matrix_width = int(os.environ["MATRIX_WIDTH"])
+        self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
+
         self.parse_hzeller_rgb_args()
                     
-        #            ⬅
+        #                  ⬅
         (self.receiver_cxn, self.sender_cxn) = multiprocessing.Pipe(duplex=False)
 
         def button_callback(client, userdata, msg):
@@ -75,20 +79,19 @@ class BaseMatrix(SampleBase):
         ima.connect()
         ima.client.subscribe(button_topic)
 
-        self.orbit = orbit.Orbit(matrix_width=32, matrix_height=64, fast_forward_scale=60 * 60 * 24 * 30)
-        self.gravity = gravity.Gravity(64, 32, 0.320, 0.160, 1)
-        self.timer = timer.Timer(64, 32)
+        dimensions = (self.matrix_width, self.matrix_height)
+        self.orbit = orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30)
+        self.gravity = gravity.Gravity(dimensions, 0.320, 0.160, 1)
+        self.timer = timer.Timer(dimensions)
         self.forms = [self.orbit, self.gravity, self.timer]
         self.form_index = 0
                 
         self.handlers = {
             "Button": {
-                0: lambda state: self.previous_form(state),
-                1: lambda state: self.next_form(state)
+                2: lambda state: self.next_form(state)
             }
         }
      
-    
     @property
     def form(self):
         return self.forms[self.form_index]

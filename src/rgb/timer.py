@@ -22,14 +22,34 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class Timer():
-    def __init__(self, matrix_height: int, matrix_width: int):
+    def __init__(self, dimensions: Tuple[int, int]):
         self.hz = 60
-        self.matrix_height = matrix_height
-        self.matrix_width = matrix_width
+        (self.matrix_width, self.matrix_height) = dimensions
         self.t_stop: Optional[datetime.datetime] = None
         self.font = ImageFont.truetype("rgb/DejaVuSans.ttf", 14)
         self.enable_visual = True
+
+        self.handlers = {
+            "Switch": {
+                0: self.switch_handler,
+            },
+            "Button": {
+                0: self.button_0_handler,
+                1: self.button_1_handler
+            }
+        }
+
+    def switch_handler(self, state: bool):
+        self.enable_visual = state
     
+    def button_0_handler(self, state: bool):
+        if state:
+            self.t_stop = None
+
+    def button_1_handler(self, state: bool):
+        if state:
+            self.t_stop = self.t_stop + datetime.timedelta(minutes=1)
+
     @staticmethod
     def render_dt(dt: datetime.timedelta) -> str:
         return str(f"{int(dt.seconds / 60)}:{dt.seconds % 60:02}")

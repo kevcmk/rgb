@@ -45,9 +45,8 @@ class Elt:
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
 class Gravity():
-    def __init__(self, matrix_height: int, matrix_width: int, world_height: float, world_width: float, population: int):
-        self.matrix_height = matrix_height
-        self.matrix_width = matrix_width
+    def __init__(self, dimensions: Tuple[int, int], world_height: float, world_width: float, population: int):
+        (self.matrix_width, self.matrix_height) = dimensions
         self.world_height = world_height # Meters 32x5mm
         self.world_width = world_width # Meters 32x5mm
         self.population = population
@@ -71,7 +70,7 @@ class Gravity():
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         
-        self.gravitational_constant = math.exp(2.5 * constrained) - 0.95
+        self.gravitational_constant = -(math.exp(2.5 * constrained) - 0.95)
     
     @property
     def matrix_scale(self) -> float:
@@ -122,8 +121,6 @@ class Gravity():
                 elt.x = -elt.x
                 elt.vx = -elt.vx
 
-            
-            
             # This one looks fluttery
             # elt.vy = elt.vy + 0.5 * -9.8 * (dt ** 2) # -9.8 m/s^2
             
