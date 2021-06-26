@@ -1,26 +1,27 @@
 
 import colorsys
-from dataclasses import dataclass
-from datetime import timedelta
+import datetime
 import json
-from json.decoder import JSONDecodeError
 import logging
 import multiprocessing
 import os
+import sys
 import time
-import datetime
+from dataclasses import dataclass
+from datetime import timedelta
+from decimal import Decimal
+from json.decoder import JSONDecodeError
 from typing import NamedTuple
+
 import numpy as np
 import numpy.typing as npt
-from decimal import Decimal
 from samplebase import SampleBase
-from messages import Button, Dial, Switch
 
 import gravity
 import imaqt
-import timer
 import orbit
-
+import timer
+from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -28,11 +29,20 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class BaseMatrix(SampleBase):
 
+    def parse_hzeller_rgb_args(self):
+        rgb_args = {k:v for k,v in os.environ.items() if k.startswith("RUN_ARG_")}
+        for k,v in rgb_args.items():
+            log.debug(f"Parsing rgb_arg: {k}: {v}")
+            argparse_style_arg = "--" + k.replace("RUN_ARG_", "").replace("_", "-").lower()
+            log.info(f"Arg-parsing: {argparse_style_arg}: {v}")
+            sys.argv.extend([argparse_style_arg, v])
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parser.add_argument("-f", "--form", action="store", help="Extra Kevin argument. The form of LED to take.")
         self.parser.add_argument("--max-fps", action="store", help="Maximum frame rate")
-        
+        self.parse_hzeller_rgb_args()
+                    
         #            ⬅
         (self.receiver_cxn, self.sender_cxn) = multiprocessing.Pipe(duplex=False)
 
