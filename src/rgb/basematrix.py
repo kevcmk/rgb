@@ -21,6 +21,7 @@ import gravity
 import imaqt
 import orbit
 import timer
+import stripes
 from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
@@ -80,10 +81,12 @@ class BaseMatrix(SampleBase):
         ima.client.subscribe(button_topic)
 
         dimensions = (self.matrix_width, self.matrix_height)
-        self.orbit = orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30)
-        self.gravity = gravity.Gravity(dimensions, 0.006, 32)
-        self.timer = timer.Timer(dimensions)
-        self.forms = [self.orbit, self.gravity, self.timer]
+        self.forms = (
+            timer.Timer(dimensions),
+            stripes.Stripes(dimensions), 
+            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
+            gravity.Gravity(dimensions, 0.006, 32), 
+        )
         self.form_index = 0
                 
         self.handlers = {
@@ -137,20 +140,7 @@ class BaseMatrix(SampleBase):
                         # If a handler succeeds, break.
                         log.debug(f"Handler succeeded for {target}")
                         break
-
-                # if value == "on":
-                #     self.form = self.timer
-                # elif value == "off":
-                #     self.form = self.gravity
-                # elif isinstance(self.form, gravity.Gravity):
-                #     self.form.population = max(1, self.form.population + value) # Prevent less than zero population
-                # elif isinstance(self.form, timer.Timer):
-                #     if value == 1:
-                #         self.form.t_stop = (self.form.t_stop or datetime.datetime.utcnow()) + datetime.timedelta(minutes=1)
-                #     elif value == -1:
-                #         self.form.t_stop = None
-                    
-                    
+                                        
             a = time.time()
             matrix = self.form.step(dt)
             b = time.time()

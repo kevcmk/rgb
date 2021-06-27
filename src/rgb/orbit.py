@@ -60,14 +60,13 @@ class Body:
         return json.dumps({key: getattr(self, key) for key in ["name", "x","y","vx","vy", "mass"]})
 
     def __hash__(self):
-        return hash((self.x, self.y, self.hue))
+        return hash((self.x, self.y, self.color))
     
     def __eq__(self, other):
         return hash(self) == hash(other)
     
     @property
     def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
-        rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(self.color[0]),np.uint8(self.color[1]),np.uint8(self.color[2]))
     
 class Orbit():
