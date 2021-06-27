@@ -24,7 +24,6 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
 # Source https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
-
 # Source https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html
 # Source https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
 
