@@ -48,7 +48,7 @@ class Timer():
 
     def button_1_handler(self, state: bool):
         if state:
-            self.t_stop = self.t_stop + datetime.timedelta(minutes=1)
+            self.t_stop = (self.t_stop or datetime.datetime.now()) + datetime.timedelta(minutes=1)
 
     @staticmethod
     def render_dt(dt: datetime.timedelta) -> str:

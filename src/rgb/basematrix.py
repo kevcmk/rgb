@@ -81,7 +81,7 @@ class BaseMatrix(SampleBase):
 
         dimensions = (self.matrix_width, self.matrix_height)
         self.orbit = orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30)
-        self.gravity = gravity.Gravity(dimensions, 0.320, 0.160, 1)
+        self.gravity = gravity.Gravity(dimensions, 0.006, 32)
         self.timer = timer.Timer(dimensions)
         self.forms = [self.orbit, self.gravity, self.timer]
         self.form_index = 0

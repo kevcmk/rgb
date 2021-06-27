@@ -45,15 +45,28 @@ class Elt:
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
 class Gravity():
-    def __init__(self, dimensions: Tuple[int, int], world_height: float, world_width: float, population: int):
+
+    def button_0_handler(self, state: bool):
+        if state:
+            self.population = min(self.population + 1, 512)
+
+    def button_1_handler(self, state: bool):
+        if state:
+            self.population = max(self.population - 1, 0)
+    
+    def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float, population: int):
         (self.matrix_width, self.matrix_height) = dimensions
-        self.world_height = world_height # Meters 32x5mm
-        self.world_width = world_width # Meters 32x5mm
+        self.world_width = self.matrix_width * meters_per_pixel
+        self.world_height = self.matrix_height * meters_per_pixel
         self.population = population
-        self.gravitational_constant = 0.08
+        self.gravitational_constant = -0.08
         self.particles: Set[Elt] = set()
           
         self.handlers = {
+            "Button": {
+                0: lambda state: self.button_0_handler(state),
+                1: lambda state: self.button_1_handler(state)
+            },
             "Dial": {
                 0: lambda state: self.adjust_gravitational_constant(state),
             }
