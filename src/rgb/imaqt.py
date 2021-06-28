@@ -45,6 +45,7 @@ class IMAQT():
             log.info(f"Unhandled message on topic '{msg.topic}': {decoded}")
 
         self.client = mqtt.Client(client_id=client_id)
+        self.client.enable_logger(logger=log)
         self.client.on_log = on_log  # https://github.com/eclipse/paho.mqtt.python/issues/365
         self.client.on_connect = on_connect
         self.client.on_message = on_message
