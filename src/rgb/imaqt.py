@@ -36,9 +36,15 @@ class IMAQT():
 
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
-                log.info(f"Connected as {client_id}.")
+                log.info(f"Connected as {client_id} to {server_hostname}.")
             else: 
                 log.error(f"Failed to connect as {str(self)}")
+
+        def on_disconnect(client, userdata, rc):
+            if rc == 0:
+                log.info(f"Disconnected {client_id} from {server_hostname}.")
+            else:
+                log.error(f"Unexpected disconnect: rc {rc}")
             
         def on_message(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
@@ -49,6 +55,7 @@ class IMAQT():
         self.client.on_log = on_log  # https://github.com/eclipse/paho.mqtt.python/issues/365
         self.client.on_connect = on_connect
         self.client.on_message = on_message
+        self.client.on_disconnect = on_disconnect
         print(self.client.suppress_exceptions)
         # self.client.will_set("public/roll", generate_payload({"message": "died"}))
         # TODO Set client id
