@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
 from json.decoder import JSONDecodeError
-from typing import NamedTuple
+from typing import NamedTuple, Dict
 
 import numpy as np
 import numpy.typing as npt
@@ -22,6 +22,7 @@ import imaqt
 import orbit
 import timer
 import stripes
+import keys
 from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
@@ -48,8 +49,10 @@ class BaseMatrix(SampleBase):
 
         self.parse_hzeller_rgb_args()
                     
-        #                  ⬅
-        (self.receiver_cxn, self.sender_cxn) = multiprocessing.Pipe(duplex=False)
+        #                         ⬅
+        (self.clicker_receiver_cxn, self.clicker_sender_cxn) = multiprocessing.Pipe(duplex=False)
+        #                         ⬅
+        (self.midi_receiver_cxn, self.midi_sender_cxn) = multiprocessing.Pipe(duplex=False)
 
         def button_callback(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
@@ -63,27 +66,47 @@ class BaseMatrix(SampleBase):
 
             if o["message"] == "button":
                 log.info(f"Got button press: {o}")
-                self.sender_cxn.send(Button(index=o["index"], state=o["state"]))
+                self.clicker_sender_cxn.send(Button(index=o["index"], state=o["state"]))
             elif o["message"] == "switch":
                 log.info(f"Got switch change: {o}")
-                self.sender_cxn.send(Switch(index=o["index"], state=o["state"]))
+                self.clicker_sender_cxn.send(Switch(index=o["index"], state=o["state"]))
             elif o["message"] == "dial":
                 log.info(f"Got dial change: {o}")
-                self.sender_cxn.send(Dial(index=o["index"], state=o["state"]))
+                self.clicker_sender_cxn.send(Dial(index=o["index"], state=o["state"]))
             else:
                 log.warning(f"Unrecognized message {o}")
+                
+        
+        def midi_callback(client, userdata, msg):
+            decoded = msg.payload.decode('utf-8')
+            log.debug(f"Midi callback invoked with message: {decoded}")
+            
+            try:
+                o = json.loads(decoded)
+            except JSONDecodeError as e:
+                log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
+                return
+            self.midi_sender_cxn.send(o)
+
+            log.info(f"Got midi control message: {o}")
+
+                
                 
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
         ima.client.message_callback_add(button_topic, button_callback)
+        midi_topic = os.environ["MIDI_CONTROL_TOPIC"]
+        ima.client.message_callback_add(midi_topic, midi_callback)
         ima.connect()
         ima.client.subscribe(button_topic)
+        ima.client.subscribe(midi_topic)
 
         dimensions = (self.matrix_width, self.matrix_height)
         self.forms = (
             timer.Timer(dimensions),
-            stripes.Stripes(dimensions), 
+            stripes.Stripes(dimensions),
+            keys.Keys(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
             gravity.Gravity(dimensions, 0.006, 32), 
         )
@@ -108,6 +131,23 @@ class BaseMatrix(SampleBase):
         if state:
             self.form_index = (self.form_index - 1) % len(self.forms)
     
+    def midi_handler(self, value: Dict):
+        # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
+        # Note, this overlaps with the piano keys on a mid-octave
+        if value['type'] == 'note_on' and value['note'] == 36:
+            # pad 0
+            self.previous_form(True)
+        elif value['type'] == 'note_on' and value['note'] == 38:
+            # pad 1
+            self.next_form(True)
+        elif value['type'] == 'note_on' and value['note'] == 42:
+            # pad 2
+            pass
+        elif value['type'] == 'note_on' and value['note'] == 46:
+            # pad 3
+            pass
+        
+
     def run(self):
 
         hz = int(self.args.max_fps)
@@ -120,16 +160,21 @@ class BaseMatrix(SampleBase):
         
         while True:
 
-            while self.receiver_cxn.poll(0):
-                value = self.receiver_cxn.recv()
-                log.info(f"Received value: {value}")
+            while self.midi_receiver_cxn.poll(0):
+                value = self.midi_receiver_cxn.recv()
+                log.info(f"midi_receiver_cxn received: {value}")
+                self.midi_handler(value)
+                self.form.midi_handler(value)
+            
+            while self.clicker_receiver_cxn.poll(0):
+                value = self.clicker_receiver_cxn.recv()
+                log.info(f"clicker_receiver_cxn received: {value}")
                 
                 message_type = type(value).__name__
                 index = value.index
                 state = value.state
                 
                 log.info(f"{message_type} -> {index}, {state}")        
-                    
                 for target in (self, self.form):
                     try:            
                         target.handlers[message_type][index](state)

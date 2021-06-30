@@ -2,7 +2,7 @@
 
 import random
 import json
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 import math
 from random import randrange
 import time
@@ -63,7 +63,7 @@ class Stripe:
     @property
     def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
-        return (np.uint8(rgb[0]),np.uint8(rgb[1]),np.uint8(rgb[2]))
+        return (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
     
 class Stripes():
     def __init__(self, dimensions: Tuple[int, int]):
@@ -76,6 +76,9 @@ class Stripes():
                #0: lambda state: self.adjust_ffw(state),
             }
         }
+    
+    def midi_handler(self, value: Dict):
+        pass
 
     def step(self, dt) -> Image.Image:
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)

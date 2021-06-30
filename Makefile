@@ -3,7 +3,7 @@ DOCKERFILE := basematrix.Dockerfile
 TAG        := $$(git log -1 --format=%h)
 IMG        := "${NAME}:${TAG}"
 LATEST     := "${NAME}:latest"
-RGB_HOST   := "cyan.local"
+RGB_HOST   := "matrix-0.local"
  
 build:
 	@docker --debug buildx build \

@@ -2,7 +2,7 @@
 
 import random
 import json
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 import math
 from random import randrange
 import time
@@ -93,6 +93,9 @@ class Orbit():
             }
         }
 
+    def midi_handler(self, value: Dict):
+        pass
+    
     def adjust_ffw(self, state):
         """
         Logarithmic scale timespan for dial 

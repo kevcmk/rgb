@@ -2,7 +2,7 @@
 
 import random
 import json
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 import math
 from random import randrange
 import time
@@ -46,14 +46,6 @@ class Elt:
     
 class Gravity():
 
-    def button_0_handler(self, state: bool):
-        if state:
-            self.population = min(self.population + 1, 512)
-
-    def button_1_handler(self, state: bool):
-        if state:
-            self.population = max(self.population - 1, 0)
-    
     def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float, population: int):
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
@@ -71,6 +63,17 @@ class Gravity():
                 0: lambda state: self.adjust_gravitational_constant(state),
             }
         }
+    
+    def midi_handler(self, value: Dict):
+        pass
+    
+    def button_0_handler(self, state: bool):
+        if state:
+            self.population = min(self.population + 1, 512)
+
+    def button_1_handler(self, state: bool):
+        if state:
+            self.population = max(self.population - 1, 0)
     
     def adjust_gravitational_constant(self, state):
         """

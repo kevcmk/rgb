@@ -10,7 +10,7 @@ import random
 import time
 from dataclasses import dataclass
 from random import randrange
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -38,6 +38,9 @@ class Timer():
                 1: self.button_1_handler
             }
         }
+    
+    def midi_handler(self, value: Dict):
+        pass
 
     def switch_handler(self, state: bool):
         self.enable_visual = state
