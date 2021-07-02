@@ -41,9 +41,10 @@ class BaseMatrix(SampleBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parser.add_argument("-f", "--form", action="store", help="Extra Kevin argument. The form of LED to take.")
-        self.parser.add_argument("--max-fps", action="store", help="Maximum frame rate")
-
+        
+        self.max_hz = 60
+        self.max_dt = 1 / self.max_hz # Seconds
+        
         self.matrix_width = int(os.environ["MATRIX_WIDTH"])
         self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
 
@@ -146,13 +147,13 @@ class BaseMatrix(SampleBase):
         elif value['type'] == 'note_on' and value['note'] == 46:
             # pad 3
             pass
-        
+        elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
+            self.max_hz = value['value'] * 3 # [0,381]
+            log.info(f"Set max_hz to {self.max_hz}")
 
     def run(self):
 
-        hz = int(self.args.max_fps)
-        dt = 1 / hz # Seconds
-        log.info(f"Running {self.args.form} at {hz} Hz...")
+        log.info(f"Running {self.form} at maximum {self.max_hz} Hz...")
         offset_canvas = self.matrix.CreateFrameCanvas()
 
         t_start = time.time()
@@ -187,18 +188,17 @@ class BaseMatrix(SampleBase):
                         break
                                         
             a = time.time()
-            matrix = self.form.step(dt)
+            matrix = self.form.step(self.max_dt)
             b = time.time()
             # for i,j,_ in np.ndindex(matrix.shape):
             #     offset_canvas.SetPixel(j, i, int(matrix[i,j][0] * 255), int(matrix[i,j][1] * 255), int(matrix[i,j][2] * 255))
             offset_canvas.SetImage(matrix)
-            c = time.time()
             offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
             
             now = time.time()
-            t_last, wait_time = now, dt - (now - t_last)
+            t_last, wait_time = now, self.max_dt - (now - t_last)
             if wait_time < 0:
-                log.warning(f"Frame dt exceeded: {wait_time}")
+                log.debug(f"Frame dt exceeded: {wait_time}")
             else:
                 time.sleep(wait_time)
 

@@ -3,7 +3,7 @@ DOCKERFILE := basematrix.Dockerfile
 TAG        := $$(git log -1 --format=%h)
 IMG        := "${NAME}:${TAG}"
 LATEST     := "${NAME}:latest"
-RGB_HOST   := "matrix-0.local"
+HOST       := "matrix.local"
  
 build:
 	@docker --debug buildx build \
@@ -14,6 +14,6 @@ build:
 		--push .
  
 restart:
-	@ssh dietpi@${RGB_HOST} "sudo systemctl restart docker.rgb"
+	@ssh dietpi@${HOST} "sudo systemctl restart docker.rgb"
 tail:
-	@ssh dietpi@${RGB_HOST} "sudo journalctl -u docker.rgb -f"
+	@ssh dietpi@${HOST} "sudo journalctl -u docker.rgb -f"

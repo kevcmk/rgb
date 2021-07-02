@@ -15,6 +15,7 @@ import os
 import numpy as np
 import numpy.typing as npt
 
+import constants
 from messages import Dial
 from utilities import constrain
 
@@ -46,12 +47,16 @@ class Elt:
     
 class Gravity():
 
+    # Shape := The bounds of the random.uniform x velocity
+    MAX_SHAPE = 0.002 # Random.uniform [-0.002, 0.002] m/s
+
     def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float, population: int):
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
         self.population = population
         self.gravitational_constant = -0.08
+        self.shape = Gravity.MAX_SHAPE * 0.5
         self.particles: Set[Elt] = set()
           
         self.handlers = {
@@ -65,7 +70,11 @@ class Gravity():
         }
     
     def midi_handler(self, value: Dict):
-        pass
+        # TODO
+        if value['type'] == 'control_change' and value['control'] == 14: 
+            self.adjust_gravitational_constant(value['value'] / constants.MIDI_DIAL_MAX)
+        elif value['type'] == 'control_change' and value['control'] == 15:
+            self.adjust_nozzle(value['value'] / constants.MIDI_DIAL_MAX)
     
     def button_0_handler(self, state: bool):
         if state:
@@ -88,6 +97,19 @@ class Gravity():
         
         self.gravitational_constant = -(math.exp(2.5 * constrained) - 0.95)
     
+    def adjust_nozzle(self, state):
+        """
+        Logarithmic scale timespan for dial 
+        
+        State 0.0 := g = 0.05 m/s^2
+        State 1.0 := g = 12 m/s^2
+        """
+        constrained = constrain(state, 0.0, 1.0)
+        # math.exp(0) = 1.0
+        # math.exp(2.5) = 12.18
+        
+        self.shape = constrained * Gravity.MAX_SHAPE
+    
     @property
     def matrix_scale(self) -> float:
         # E.g. 1:4 would be 0.25
@@ -103,7 +125,7 @@ class Gravity():
                 Elt(
                     x=self.world_width / 2,
                     y=self.world_height, 
-                    vx=random.uniform(-0.002, 0.002),
+                    vx=random.uniform(-self.shape, self.shape),
                     vy=0
                 )
             )

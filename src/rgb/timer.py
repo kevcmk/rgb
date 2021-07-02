@@ -23,7 +23,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class Timer():
     def __init__(self, dimensions: Tuple[int, int]):
-        self.hz = 60
+        self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
         self.t_stop: Optional[datetime.datetime] = None
         self.font = ImageFont.truetype("rgb/DejaVuSans.ttf", 14)
