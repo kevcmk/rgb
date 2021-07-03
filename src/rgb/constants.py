@@ -1,0 +1,1 @@
+MIDI_DIAL_MAX = 127

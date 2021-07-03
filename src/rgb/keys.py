@@ -51,7 +51,7 @@ class Keys():
         xs = np.linspace(start=0, stop=self.matrix_width, num=len(self.keys) + 1, endpoint=True, dtype=np.uint8)
         for i, v in enumerate(self.keys):
             hue = i / len(self.keys)
-            rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+            rgb = colorsys.hsv_to_rgb(hue, 1.0, int(v))
             pixel = (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
             lo = xs[i]
             hi = xs[i + 1] 

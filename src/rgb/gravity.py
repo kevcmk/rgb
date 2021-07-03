@@ -172,13 +172,5 @@ class Gravity():
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
         return self._render()
 
-    
-       
 
-
-# Main function
-if __name__ == "__main__":
-    gravity = Gravity()
-    if not gravity.process():
-        gravity.print_help()
 

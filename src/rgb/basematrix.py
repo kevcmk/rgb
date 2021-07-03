@@ -15,12 +15,13 @@ from typing import NamedTuple, Dict
 
 import numpy as np
 import numpy.typing as npt
-from samplebase import SampleBase
 
+import hzel_samplebase
 import gravity
 import imaqt
 import orbit
 import timer
+import stars
 import stripes
 import keys
 from messages import Button, Dial, Switch
@@ -29,7 +30,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class BaseMatrix(SampleBase):
+class BaseMatrix(hzel_samplebase.SampleBase):
 
     def parse_hzeller_rgb_args(self):
         rgb_args = {k:v for k,v in os.environ.items() if k.startswith("RUN_ARG_")}
@@ -42,7 +43,6 @@ class BaseMatrix(SampleBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.max_hz = 60
         self.max_dt = 1 / self.max_hz # Seconds
         
         self.matrix_width = int(os.environ["MATRIX_WIDTH"])
@@ -107,6 +107,7 @@ class BaseMatrix(SampleBase):
         self.forms = (
             timer.Timer(dimensions),
             stripes.Stripes(dimensions),
+            stars.Stars(dimensions), 
             keys.Keys(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
             gravity.Gravity(dimensions, 0.006, 32), 
