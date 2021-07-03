@@ -43,7 +43,7 @@ class BaseMatrix(hzel_samplebase.SampleBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.max_dt = 1 / self.max_hz # Seconds
+        self.max_hz = 60
         
         self.matrix_width = int(os.environ["MATRIX_WIDTH"])
         self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
@@ -90,9 +90,6 @@ class BaseMatrix(hzel_samplebase.SampleBase):
             self.midi_sender_cxn.send(o)
 
             log.info(f"Got midi control message: {o}")
-
-                
-                
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
@@ -119,7 +116,12 @@ class BaseMatrix(hzel_samplebase.SampleBase):
                 2: lambda state: self.next_form(state)
             }
         }
-     
+
+    @property
+    def max_dt(self):
+        # +1 to prevent 
+        return 1 / (self.max_hz + 1)
+
     @property
     def form(self):
         return self.forms[self.form_index]
@@ -187,21 +189,20 @@ class BaseMatrix(hzel_samplebase.SampleBase):
                         # If a handler succeeds, break.
                         log.debug(f"Handler succeeded for {target}")
                         break
-                                        
-            a = time.time()
-            matrix = self.form.step(self.max_dt)
-            b = time.time()
-            # for i,j,_ in np.ndindex(matrix.shape):
-            #     offset_canvas.SetPixel(j, i, int(matrix[i,j][0] * 255), int(matrix[i,j][1] * 255), int(matrix[i,j][2] * 255))
-            offset_canvas.SetImage(matrix)
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
-            
+
             now = time.time()
-            t_last, wait_time = now, self.max_dt - (now - t_last)
+            total_elapsed_since_last_frame = now - t_last
+            t_last, wait_time = now, self.max_dt - total_elapsed_since_last_frame
             if wait_time < 0:
                 log.debug(f"Frame dt exceeded: {wait_time}")
             else:
-                time.sleep(wait_time)
+                time.sleep(wait_time)    
+            
+            matrix = self.form.step(total_elapsed_since_last_frame)
+            offset_canvas.SetImage(matrix)
+            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+            
+            
 
         
 if __name__ == "__main__":

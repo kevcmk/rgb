@@ -60,13 +60,10 @@ class Stars():
         pass
 
     def step(self, dt):
-        
-        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8) 
         self.elts = set(filter(lambda x: x.alive, self.elts))
         self.elts.update([Elt() for _ in range(self.population - len(self.elts))])
         return self._render()      
         
-
     def _render(self):
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         for elt in self.elts:
@@ -78,4 +75,3 @@ class Stars():
                     0 <= render_x < self.matrix_width:
                     img[render_y,render_x,:] = (np.uint8(255 * rgb[0]), np.uint8(255 * rgb[1]), np.uint8(255 * rgb[2]))
         return Image.fromarray(img)
-                
