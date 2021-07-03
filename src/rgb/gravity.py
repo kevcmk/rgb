@@ -18,6 +18,7 @@ import numpy.typing as npt
 import constants
 from messages import Dial
 from utilities import constrain
+from form import Form
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -45,7 +46,7 @@ class Elt:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
-class Gravity():
+class Gravity(Form):
 
     # Shape := The bounds of the random.uniform x velocity
     MAX_SHAPE = 0.002 # Random.uniform [-0.002, 0.002] m/s

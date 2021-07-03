@@ -16,6 +16,7 @@ import math
 import numpy as np
 import numpy.typing as npt
 
+from form import Form
 from messages import Dial
 from utilities import constrain
 
@@ -69,7 +70,7 @@ class Body:
     def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
         return (np.uint8(self.color[0]),np.uint8(self.color[1]),np.uint8(self.color[2]))
     
-class Orbit():
+class Orbit(Form):
     def __init__(self, dimensions: Tuple[int, int], fast_forward_scale: float):
         self.fast_forward_scale = fast_forward_scale
         (self.matrix_width, self.matrix_height) = dimensions
@@ -92,9 +93,6 @@ class Orbit():
                 0: lambda state: self.adjust_ffw(state),
             }
         }
-
-    def midi_handler(self, value: Dict):
-        pass
     
     def adjust_ffw(self, state):
         """

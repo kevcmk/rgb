@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import colorsys
 from typing import Dict
 from PIL import Image
+from form import Form
 
 
 @dataclass
@@ -48,7 +49,7 @@ class Elt:
         #return min(1.0, res * 2)
         
     
-class Stars():
+class Stars(Form):
     def __init__(self, dimensions: Tuple[int, int]):
         (self.matrix_width, self.matrix_height) = dimensions
         self.population = 256

@@ -89,7 +89,7 @@ class BaseMatrix(hzel_samplebase.SampleBase):
                 return
             self.midi_sender_cxn.send(o)
 
-            log.info(f"Got midi control message: {o}")
+            log.debug(f"Got midi control message: {o}")
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
@@ -129,10 +129,12 @@ class BaseMatrix(hzel_samplebase.SampleBase):
     # Button handler, when true change state
     def next_form(self, state):
         if state:
+            self.form.cleanup()
             self.form_index = (self.form_index + 1) % len(self.forms)
         
     def previous_form(self, state):
         if state:
+            self.form.cleanup()
             self.form_index = (self.form_index - 1) % len(self.forms)
     
     def midi_handler(self, value: Dict):
@@ -164,11 +166,24 @@ class BaseMatrix(hzel_samplebase.SampleBase):
         
         while True:
 
+            now = time.time()
+            total_elapsed_since_last_frame = now - t_last
+            t_last, wait_time = now, self.max_dt - total_elapsed_since_last_frame
+            if wait_time < 0:
+                log.debug(f"Frame dt exceeded: {wait_time}")
+            else:
+                time.sleep(wait_time)    
+            
+            matrix = self.form.step(total_elapsed_since_last_frame)
+            offset_canvas.SetImage(matrix)
+            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+            
             while self.midi_receiver_cxn.poll(0):
                 value = self.midi_receiver_cxn.recv()
                 log.info(f"midi_receiver_cxn received: {value}")
-                self.midi_handler(value)
+                # If form midi handler goes firse, then a pad strike that is also a valid key press does not induce that form's key's effect.
                 self.form.midi_handler(value)
+                self.midi_handler(value)
             
             while self.clicker_receiver_cxn.poll(0):
                 value = self.clicker_receiver_cxn.recv()
@@ -189,20 +204,6 @@ class BaseMatrix(hzel_samplebase.SampleBase):
                         # If a handler succeeds, break.
                         log.debug(f"Handler succeeded for {target}")
                         break
-
-            now = time.time()
-            total_elapsed_since_last_frame = now - t_last
-            t_last, wait_time = now, self.max_dt - total_elapsed_since_last_frame
-            if wait_time < 0:
-                log.debug(f"Frame dt exceeded: {wait_time}")
-            else:
-                time.sleep(wait_time)    
-            
-            matrix = self.form.step(total_elapsed_since_last_frame)
-            offset_canvas.SetImage(matrix)
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
-            
-            
 
         
 if __name__ == "__main__":

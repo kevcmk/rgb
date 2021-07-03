@@ -15,13 +15,14 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
+from form import Form
 
 from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-class Timer():
+class Timer(Form):
     def __init__(self, dimensions: Tuple[int, int]):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
@@ -39,9 +40,6 @@ class Timer():
             }
         }
     
-    def midi_handler(self, value: Dict):
-        pass
-
     def switch_handler(self, state: bool):
         self.enable_visual = state
     
