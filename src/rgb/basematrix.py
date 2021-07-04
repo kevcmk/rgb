@@ -152,9 +152,9 @@ class BaseMatrix(hzel_samplebase.SampleBase):
         elif value['type'] == 'note_on' and value['note'] == 46:
             # pad 3
             pass
-        elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
-            self.max_hz = value['value'] * 3 # [0,381]
-            log.info(f"Set max_hz to {self.max_hz}")
+        # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
+        #     self.max_hz = value['value'] * 3 # [0,381]
+        #     log.info(f"Set max_hz to {self.max_hz}")
 
     def run(self):
 
