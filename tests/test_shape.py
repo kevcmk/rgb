@@ -7,14 +7,14 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'rgb')))
 
-from shape import Shape
+from wave import Wave
 
 hz = 1
 dt = 1/hz
 scale = 4
 matrix_height = 160
 matrix_width = 32
-g = Shape((matrix_width, matrix_height))
+g = Wave((matrix_width, matrix_height))
 
 root = Tk()      
 canvas = Canvas(root, width = matrix_width * scale, height = matrix_height * scale)      

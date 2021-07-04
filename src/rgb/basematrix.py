@@ -23,6 +23,7 @@ import orbit
 import timer
 import stars
 import stripes
+import shape
 import keys
 from messages import Button, Dial, Switch
 
@@ -102,12 +103,13 @@ class BaseMatrix(hzel_samplebase.SampleBase):
 
         dimensions = (self.matrix_width, self.matrix_height)
         self.forms = (
-            timer.Timer(dimensions),
-            stripes.Stripes(dimensions),
+            # timer.Timer(dimensions),
+            # stripes.Stripes(dimensions),
             stars.Stars(dimensions), 
             keys.Keys(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
             gravity.Gravity(dimensions, 0.006, 32), 
+            shape.Shape(dimensions), 
         )
         self.form_index = 0
                 
