@@ -14,5 +14,3 @@ class Form(ABC):
 
     def cleanup(self):
         pass
-    
-    

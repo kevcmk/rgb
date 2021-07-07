@@ -3,9 +3,7 @@ import time
 import sys
 import os
 
-# Copied from hzeller rgb matrix.
-
-# sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 
