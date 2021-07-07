@@ -6,9 +6,16 @@ import os
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
+# This copied from hzel sample base 
+# https://github.com/hzeller/rpi-rgb-led-matrix/blob/dfc27c15c224a92496034a39512a274744879e86/bindings/python/samples/samplebase.py
+#
 
-class SampleBase(object):
+class SampleBaseMatrixFactory(object):
+    # Added this
     def __init__(self, *args, **kwargs):
+        pass
+
+    def from_argparse(self) -> RGBMatrix:
         self.parser = argparse.ArgumentParser()
 
         self.parser.add_argument("-r", "--led-rows", action="store", help="Display rows. 16 for 16x32, 32 for 32x32. Default: 32", default=32, type=int)
@@ -31,13 +38,15 @@ class SampleBase(object):
         self.parser.add_argument("--led-no-drop-privs", dest="drop_privileges", help="Don't drop privileges from 'root' after initializing the hardware.", action='store_false')
         self.parser.set_defaults(drop_privileges=True)
 
+        return self._factory()
+
     def usleep(self, value):
         time.sleep(value / 1000000.0)
 
     def run(self):
         print("Running")
 
-    def process(self):
+    def _factory(self) -> RGBMatrix:
         self.args = self.parser.parse_args()
 
         options = RGBMatrixOptions()
@@ -70,12 +79,13 @@ class SampleBase(object):
 
         self.matrix = RGBMatrix(options = options)
 
-        try:
-            # Start loop
-            print("Press CTRL-C to stop sample")
-            self.run()
-        except KeyboardInterrupt:
-            print("Exiting\n")
-            sys.exit(0)
+        # Commented this out
+        # try:
+        #     # Start loop
+        #     print("Press CTRL-C to stop sample")
+        #     self.run()
+        # except KeyboardInterrupt:
+        #     print("Exiting\n")
+        #     sys.exit(0)
 
-        return True
+        return self.matrix

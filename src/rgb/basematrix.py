@@ -1,4 +1,6 @@
 
+import colorsys
+import datetime
 
 import json
 import logging
@@ -6,32 +8,34 @@ import multiprocessing
 import os
 import sys
 import time
-from dataclasses import astuple, dataclass
+from dataclasses import dataclass
+from datetime import timedelta
+from decimal import Decimal
 from json.decoder import JSONDecodeError
-from typing import Dict
+from typing import NamedTuple, Dict
 
 import numpy as np
 import numpy.typing as npt
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
+from rgbmatrix import RGBMatrix
+
+from hzel_samplebase import SampleBaseMatrixFactory
 import constants
 import gravity
-import hzel_samplebase
 import imaqt
-import keys
 import orbit
-import shape
+import timer
 import stars
 import stripes
-import timer
+import shape
+import keys
 from messages import Button, Dial, Switch
-from utilities import Dimensions
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class BaseMatrix(hzel_samplebase.SampleBase):
+class BaseMatrix():
 
     def parse_hzeller_rgb_args(self):
         rgb_args = {k:v for k,v in os.environ.items() if k.startswith("RUN_ARG_")}
@@ -41,13 +45,120 @@ class BaseMatrix(hzel_samplebase.SampleBase):
             log.info(f"Arg-parsing: {argparse_style_arg}: {v}")
             sys.argv.extend([argparse_style_arg, v])
 
-    def __init__(self, dimensions: Dimensions):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         
-        self.parse_hzeller_rgb_args()
-                    
+        self.max_hz = 60
+        
+        self.matrix_width = int(os.environ["MATRIX_WIDTH"])
+        self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
 
-    def run(self):
+        # Move environment variables into sys.argv
+        self.parse_hzeller_rgb_args()
+        self.matrix: RGBMatrix = SampleBaseMatrixFactory().from_argparse()
+                    
+        #                         ⬅
+        (self.clicker_receiver_cxn, self.clicker_sender_cxn) = multiprocessing.Pipe(duplex=False)
+        #                         ⬅
+        (self.midi_receiver_cxn, self.midi_sender_cxn) = multiprocessing.Pipe(duplex=False)
+
+        def button_callback(client, userdata, msg):
+            decoded = msg.payload.decode('utf-8')
+            log.debug(f"Button callback invoked with message: {decoded}")
+            
+            try:
+                o = json.loads(decoded)
+            except JSONDecodeError as e:
+                log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
+                return
+
+            if o["message"] == "button":
+                log.info(f"Got button press: {o}")
+                self.clicker_sender_cxn.send(Button(index=o["index"], state=o["state"]))
+            elif o["message"] == "switch":
+                log.info(f"Got switch change: {o}")
+                self.clicker_sender_cxn.send(Switch(index=o["index"], state=o["state"]))
+            elif o["message"] == "dial":
+                log.info(f"Got dial change: {o}")
+                self.clicker_sender_cxn.send(Dial(index=o["index"], state=o["state"]))
+            else:
+                log.warning(f"Unrecognized message {o}")
+                
+        
+        def midi_callback(client, userdata, msg):
+            decoded = msg.payload.decode('utf-8')
+            log.debug(f"Midi callback invoked with message: {decoded}")
+            
+            try:
+                o = json.loads(decoded)
+            except JSONDecodeError as e:
+                log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
+                return
+            self.midi_sender_cxn.send(o)
+
+            log.debug(f"Got midi control message: {o}")
+        
+        ima = imaqt.IMAQT.factory()
+        button_topic = os.environ["CONTROL_TOPIC"]
+        ima.client.message_callback_add(button_topic, button_callback)
+        midi_topic = os.environ["MIDI_CONTROL_TOPIC"]
+        ima.client.message_callback_add(midi_topic, midi_callback)
+        ima.connect()
+        ima.client.subscribe(button_topic)
+        ima.client.subscribe(midi_topic)
+
+        dimensions = (self.matrix_width, self.matrix_height)
+        self.forms = (
+            # timer.Timer(dimensions),
+            # stripes.Stripes(dimensions),
+            stars.Stars(dimensions), 
+            keys.Keys(dimensions), 
+            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
+            gravity.Gravity(dimensions, 0.006, 32), 
+            shape.Shape(dimensions), 
+        )
+        self.form_index = 0
+                
+        self.handlers = {
+            "Button": {
+                2: lambda state: self.next_form(state)
+            }
+        }
+
+    @property
+    def max_dt(self):
+        # +1 to prevent 
+        return 1 / (self.max_hz + 1)
+
+    @property
+    def form(self):
+        return self.forms[self.form_index]
+    
+    # Button handler, when true change state
+    def next_form(self, state):
+        if state:
+            self.form.cleanup()
+            self.form_index = (self.form_index + 1) % len(self.forms)
+        
+    def previous_form(self, state):
+        if state:
+            self.form.cleanup()
+            self.form_index = (self.form_index - 1) % len(self.forms)
+    
+    def midi_handler(self, value: Dict):
+        # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
+        # Note, this overlaps with the piano keys on a mid-octave
+        if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[0]:
+            # pad 0
+            self.previous_form(True)
+        elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[1]:
+            # pad 1
+            self.next_form(True)
+        # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
+        #     self.max_hz = value['value'] * 3 # [0,381]
+        #     log.info(f"Set max_hz to {self.max_hz}")
+
+    def blocking_loop(self):
 
         log.info(f"Running {self.form} at maximum {self.max_hz} Hz...")
         offset_canvas = self.matrix.CreateFrameCanvas()
@@ -99,6 +210,5 @@ class BaseMatrix(hzel_samplebase.SampleBase):
         
 if __name__ == "__main__":
     b = BaseMatrix()
-    if not b.process():
-        b.print_help()
+    b.blocking_loop()
 
