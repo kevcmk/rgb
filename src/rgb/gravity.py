@@ -65,14 +65,15 @@ class Gravity(Form):
                 0: lambda state: self.button_0_handler(state),
                 1: lambda state: self.button_1_handler(state)
             },
-            "Dial": {
-                0: lambda state: self.adjust_gravitational_constant(state),
-            }
         }
     
     def midi_handler(self, value: Dict):
         # TODO
-        if value['type'] == 'control_change' and value['control'] == 14: 
+        if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[2]:
+            self.population = min(self.population + 1, 512)
+        elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[3]:
+            self.population = max(self.population - 1, 0)
+        elif value['type'] == 'control_change' and value['control'] == 14: 
             self.adjust_gravitational_constant(value['value'] / constants.MIDI_DIAL_MAX)
         elif value['type'] == 'control_change' and value['control'] == 15:
             self.adjust_nozzle(value['value'] / constants.MIDI_DIAL_MAX)

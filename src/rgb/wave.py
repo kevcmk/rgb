@@ -69,6 +69,7 @@ class Wave(Form):
         rgb = colorsys.hsv_to_rgb(1.0, 1.0, v)
         return (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
 
+    # Horizontal
     def step(self, dt) -> Image.Image:
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         
@@ -82,7 +83,7 @@ class Wave(Form):
         #     img[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
 
 
-        x = np.linspace(0, self.matrix_height, self.matrix_height)
+        x = np.linspace(0, self.matrix_width, self.matrix_width)
         linear = Wave.normal_dist(x, 0, 5.0)
         # Normalize between 0 and 1
         linear /= np.max(np.abs(linear),axis=0)
@@ -97,4 +98,3 @@ class Wave(Form):
                     
         # Return the vertical flip, origin at the top.
         return Image.fromarray(matrix_rgb) #.transpose(Image.FLIP_TOP_BOTTOM)
-

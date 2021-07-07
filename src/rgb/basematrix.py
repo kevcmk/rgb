@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 
 import hzel_samplebase
+import constants
 import gravity
 import imaqt
 import orbit
@@ -142,18 +143,12 @@ class BaseMatrix(hzel_samplebase.SampleBase):
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
-        if value['type'] == 'note_on' and value['note'] == 36:
+        if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[0]:
             # pad 0
             self.previous_form(True)
-        elif value['type'] == 'note_on' and value['note'] == 38:
+        elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[1]:
             # pad 1
             self.next_form(True)
-        elif value['type'] == 'note_on' and value['note'] == 42:
-            # pad 2
-            pass
-        elif value['type'] == 'note_on' and value['note'] == 46:
-            # pad 3
-            pass
         # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
         #     self.max_hz = value['value'] * 3 # [0,381]
         #     log.info(f"Set max_hz to {self.max_hz}")

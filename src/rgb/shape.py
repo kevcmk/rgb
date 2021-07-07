@@ -36,13 +36,14 @@ class Press():
     rotation: int 
     fill: Tuple[int, int, int]
 
-class Wave(Form):
+class Shape(Form):
 
     NUM_NOTES = 12
 
     def __init__(self, dimensions: Tuple[int, int]):
         (self.matrix_width, self.matrix_height) = dimensions
         self.presses = dict()
+        self.grow = 0
         self.handlers = {
             "Dial": {
                #0: lambda state: self.adjust_ffw(state),
@@ -58,7 +59,7 @@ class Wave(Form):
             note = value['note']
             velocity = value['velocity'] / MAX_MIDI_VELOCITY
             
-            hue = (note % Wave.NUM_NOTES) / Wave.NUM_NOTES
+            hue = (note % Shape.NUM_NOTES) / Shape.NUM_NOTES
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
             color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
             self.presses[note] = Press(
@@ -76,6 +77,8 @@ class Wave(Form):
             note = value['note']
             if note in self.presses:
                 del self.presses[note]
+        if value['type'] == 'control_change' and value['control'] == 14: 
+            self.grow = value['value'] / 4
         else:
             log.debug(f"Unhandled message: {value}")
 
@@ -83,10 +86,12 @@ class Wave(Form):
         
         
     def step(self, dt) -> Image.Image:
-        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
-        
+        img = Image.new("RGB", (self.matrix_width, self.matrix_height))
+        draw_context = ImageDraw.Draw(img)
+        now = time.time()
         for press in sorted(self.presses.values(), key=lambda x: x.t):
-            draw_context.regular_polygon((press.bounding_circle_x,press.bounding_circle_y,press.bounding_circle_r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
+            r = press.bounding_circle_r + (now - press.t) * self.grow
+            draw_context.regular_polygon((press.bounding_circle_x,press.bounding_circle_y,r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
         # Return the vertical flip, origin at the top.
         return img
 
