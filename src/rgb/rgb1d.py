@@ -21,6 +21,8 @@ from forms.chase import Chase
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
+log = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class RGB1D():
 
@@ -28,7 +30,7 @@ class RGB1D():
         super().__init__(*args, **kwargs)
         self.max_hz = 60
         self.height = int(os.environ["LED_COUNT"])
-        self.rgb_strip = RGBStrip(height=self.height)
+        self.display = RGBStrip(height=self.height)
         #                       ⬅
         (self.midi_receiver_cxn, self.midi_sender_cxn) = multiprocessing.Pipe(duplex=False)
 
@@ -76,8 +78,14 @@ class RGB1D():
     def render(self, total_elapsed_since_last_frame: float):
         image = self.form.step(total_elapsed_since_last_frame)
         for i in range(self.height):
-            self.strip.setPixelColor(i, Color(image[i,0],image[i,1],image[i,2]))
-        self.set_framecanvas(image)
+            self.display.rgb_strip.setPixelColor(
+                i, 
+                Color(
+                    int(image[i,0]),
+                    int(image[i,1]),
+                    int(image[i,2])
+                )
+            )
 
     def interframe_sleep(self):
         now = time.time()

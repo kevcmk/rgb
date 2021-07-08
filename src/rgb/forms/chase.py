@@ -23,7 +23,7 @@ class Chase(Form):
         pass
 
     def step(self, dt: float):
-        mat = np.zeros((self.height,))
+        mat = np.zeros((self.height,3))
         
         mat[(self.index - 0) % self.height,:] = (np.uint8(255), np.uint8(0), np.uint8(0))
         mat[(self.index - 1) % self.height,:] = (np.uint8(127), np.uint8(0), np.uint8(0))

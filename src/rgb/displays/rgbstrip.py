@@ -19,35 +19,36 @@ class RGBStrip:
         
         self.hz = 40
 
-        self.strip: PixelStrip = PixelStrip(height, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
+        self.rgb_strip: PixelStrip = PixelStrip(height, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
         # Intialize the library (must be called once before other functions).
-        self.strip.begin()
+        self.rgb_strip.begin()
         atexit.register(lambda: self.clear())
 
-        self.height = self.strip.numPixels()
+        self.height = self.rgb_strip.numPixels()
         
-        print(f"Running chase @ {self.height}...")    
+        
         
     def blocking_loop(self):
+        log.info(f"Running chase @ {self.height}...")    
         i = 0
         while True:
             i += 1
-            self.strip.setPixelColor((i - 0) % self.height, Color(255, 0, 0))
-            self.strip.setPixelColor((i - 1) % self.height, Color(127, 0, 0))
-            self.strip.setPixelColor((i - 2) % self.height, Color(63, 0, 0))
-            self.strip.setPixelColor((i - 3) % self.height, Color(31, 0, 0))
-            self.strip.setPixelColor((i - 4) % self.height, Color(15, 0, 0))
-            self.strip.setPixelColor((i - 4) % self.height, Color(7, 0, 0))
-            self.strip.setPixelColor((i - 5) % self.height, Color(3, 0, 0))
-            self.strip.setPixelColor((i - 6) % self.height, Color(1, 0, 0))
-            self.strip.setPixelColor((i - 7) % self.height, Color(0, 0, 0))
-            self.strip.show()
+            self.rgb_strip.setPixelColor((i - 0) % self.height, Color(255, 0, 0))
+            self.rgb_strip.setPixelColor((i - 1) % self.height, Color(127, 0, 0))
+            self.rgb_strip.setPixelColor((i - 2) % self.height, Color(63, 0, 0))
+            self.rgb_strip.setPixelColor((i - 3) % self.height, Color(31, 0, 0))
+            self.rgb_strip.setPixelColor((i - 4) % self.height, Color(15, 0, 0))
+            self.rgb_strip.setPixelColor((i - 4) % self.height, Color(7, 0, 0))
+            self.rgb_strip.setPixelColor((i - 5) % self.height, Color(3, 0, 0))
+            self.rgb_strip.setPixelColor((i - 6) % self.height, Color(1, 0, 0))
+            self.rgb_strip.setPixelColor((i - 7) % self.height, Color(0, 0, 0))
+            self.rgb_strip.show()
             time.sleep(1 / self.hz)
             
 
 
     def clear(self):
-        for i in range(self.strip.numPixels()):
-            self.strip.setPixelColor(i, Color(0,0,0))
-        self.strip.show()
+        for i in range(self.rgb_strip.numPixels()):
+            self.rgb_strip.setPixelColor(i, Color(0,0,0))
+        self.rgb_strip.show()
 
