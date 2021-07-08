@@ -27,7 +27,7 @@ class Timer(Form):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
         self.t_stop: Optional[datetime.datetime] = None
-        self.font = ImageFont.truetype("rgb/DejaVuSans.ttf", 14)
+        self.font = ImageFont.truetype("rgb/fonts/DejaVuSans.ttf", 14)
         self.enable_visual = True
 
         self.handlers = {
@@ -77,7 +77,7 @@ class Timer(Form):
                 )
         return im
 
-    def step(self, dt) -> Image.Image:
+    def step(self, dt: float):
         return self._render()
 
     

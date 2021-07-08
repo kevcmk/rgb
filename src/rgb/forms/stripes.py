@@ -81,7 +81,7 @@ class Stripes(Form):
     def midi_handler(self, value: Dict):
         pass
 
-    def step(self, dt: float):
+    def step(self, dt) -> Image.Image:
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         for s in self.stripes:
             s.hue = (s.hue + s.hue_velocity) % 1.0

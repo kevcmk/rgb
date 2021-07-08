@@ -59,7 +59,7 @@ class Keys(Form):
         else:
             log.debug(f"Unhandled message: {value}")
 
-    def step(self, dt: float):
+    def step(self, dt) -> Image.Image:
         img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         xs = np.linspace(start=0, stop=self.matrix_width, num=Keys.NUM_NOTES + 1, endpoint=True, dtype=np.uint8)
         for k, v in self.presses.items():

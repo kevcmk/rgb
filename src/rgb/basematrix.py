@@ -19,16 +19,18 @@ from PIL import Image
 from rgbmatrix import RGBMatrix, FrameCanvas
 
 import constants
-import gravity
 import imaqt
-import keys
-import orbit
-import shape
-import stars
-import stripes
-import timer
 from hzel_samplebase import SampleBaseMatrixFactory
 from messages import Button, Dial, Switch
+
+from forms import gravity
+from forms import keys
+from forms import orbit
+from forms import shape
+from forms import stars
+from forms import stripes
+from forms import timer
+
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -186,7 +188,7 @@ class BaseMatrix():
             while self.midi_receiver_cxn.poll(0):
                 value = self.midi_receiver_cxn.recv()
                 log.info(f"midi_receiver_cxn received: {value}")
-                # If form midi handler goes firse, then a pad strike that is also a valid key press does not induce that form's key's effect.
+                # If form midi handler goes first, then a pad strike that is also a valid key press does not induce that form's key's effect.
                 self.form.midi_handler(value)
                 self.midi_handler(value)
             

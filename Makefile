@@ -1,34 +1,27 @@
-BASEMATRIX_NAME       := kevinkatz/basematrix
-BASEMATRIX_DOCKERFILE := basematrix.Dockerfile
-RGBSTRIP_NAME := kevinkatz/rgbstrip
-RGBSTRIP_DOCKERFILE := rgbstrip.Dockerfile
-TAG        := $$(git log -1 --format=%h)
+DOCKERHUB_USER := kevinkatz
+BASEMATRIX_NAME := basematrix
+RGBSTRIP_NAME := rgbstrip
+GIT_HASH_TAG := $$(git log -1 --format=%h)
+TRGT := "cyan.local"
 
-BASEMATRIX_IMG := "${BASEMATRIX_NAME}:${TAG}"
-RGBSTRIP_IMG := "${RGBSTRIP_NAME}:${TAG}"
-
-BASEMATRIX_LATEST     := "${BASEMATRIX_NAME}:latest"
-RGBSTRIP_LATEST     := "${RGBSTRIP_NAME}:latest"
-
-BASEMATRIX_HOST       := "matrix.local"
- 
-build:
+build2d:
 	@docker --debug buildx build \
 		--pull \
-		-f "${BASEMATRIX_DOCKERFILE}" \
-		-t "${BASEMATRIX_IMG}" -t "${BASEMATRIX_LATEST}" \
+		-f "${BASEMATRIX_NAME}.Dockerfile" \
+		-t "${DOCKERHUB_USER}/${BASEMATRIX_NAME}:${GIT_HASH_TAG}" -t "${DOCKERHUB_USER}/${BASEMATRIX_NAME}:latest" \
 		--platform=linux/arm64 \
 		--push .
  
-build_rgbstrip:
+build1d:
 	@docker --debug buildx build \
 		--pull \
-		-f "${RGBSTRIP_DOCKERFILE}" \
-		-t "${RGBSTRIP_IMG}" -t "${RGBSTRIP_LATEST}" \
+		-f "${RGBSTRIP_NAME}.Dockerfile" \
+		-t "${DOCKERHUB_USER}/${RGBSTRIP_NAME}:${GIT_HASH_TAG}" -t "${DOCKERHUB_USER}/${RGBSTRIP_NAME}:latest" \
 		--platform=linux/arm64 \
 		--push .
  
 restart:
-	@ssh dietpi@${BASEMATRIX_HOST} "sudo systemctl restart docker.rgb"
+	@ssh dietpi@${TRGT} "sudo systemctl restart docker.rgb"
+
 tail:
-	@ssh dietpi@${BASEMATRIX_HOST} "sudo journalctl -u docker.rgb -f"
+	@ssh dietpi@${TRGT} "sudo journalctl -u docker.rgb -f"
