@@ -86,6 +86,7 @@ class RGB1D():
                     int(image[i,2])
                 )
             )
+        self.display.rgb_strip.show()
 
     def interframe_sleep(self):
         now = time.time()

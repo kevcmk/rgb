@@ -24,7 +24,6 @@ class Chase(Form):
 
     def step(self, dt: float):
         mat = np.zeros((self.height,3))
-        
         mat[(self.index - 0) % self.height,:] = (np.uint8(255), np.uint8(0), np.uint8(0))
         mat[(self.index - 1) % self.height,:] = (np.uint8(127), np.uint8(0), np.uint8(0))
         mat[(self.index - 2) % self.height,:] = (np.uint8(63), np.uint8(0), np.uint8(0))
@@ -34,5 +33,5 @@ class Chase(Form):
         mat[(self.index - 5) % self.height,:] = (np.uint8(3), np.uint8(0), np.uint8(0))
         mat[(self.index - 6) % self.height,:] = (np.uint8(1), np.uint8(0), np.uint8(0))
         mat[(self.index - 7) % self.height,:] = (np.uint8(0), np.uint8(0), np.uint8(0))
-    
+        self.index += 1
         return mat
