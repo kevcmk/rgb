@@ -1,7 +1,6 @@
 
 import colorsys
 import datetime
-
 import json
 import logging
 import multiprocessing
@@ -12,23 +11,23 @@ from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
 from json.decoder import JSONDecodeError
-from typing import NamedTuple, Dict
+from typing import Dict, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
+from PIL import Image
+from rgbmatrix import RGBMatrix, FrameCanvas
 
-from rgbmatrix import RGBMatrix
-
-from hzel_samplebase import SampleBaseMatrixFactory
 import constants
 import gravity
 import imaqt
+import keys
 import orbit
-import timer
+import shape
 import stars
 import stripes
-import shape
-import keys
+import timer
+from hzel_samplebase import SampleBaseMatrixFactory
 from messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
@@ -53,9 +52,16 @@ class BaseMatrix():
         self.matrix_width = int(os.environ["MATRIX_WIDTH"])
         self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
 
-        # Move environment variables into sys.argv
         self.parse_hzeller_rgb_args()
         self.matrix: RGBMatrix = SampleBaseMatrixFactory().from_argparse()
+        # Documentation: https://github.com/hzeller/rpi-rgb-led-matrix/blob/dfc27c15c224a92496034a39512a274744879e86/include/led-matrix.h#L204
+        # for explanation
+        # Explanation: https://github.com/hzeller/rpi-rgb-led-matrix/blob/dfc27c15c224a92496034a39512a274744879e86/bindings/python/samples/rotating-block-generator.py#L42
+        self.offset_canvas: FrameCanvas = self.matrix.CreateFrameCanvas()
+        def _set_framecanvas(image: Image.Image) -> FrameCanvas:
+            self.offset_canvas.SetImage(image)
+            self.offset_canvas = self.matrix.SwapOnVSync(self.offset_canvas)
+        self.set_framecanvas = _set_framecanvas
                     
         #                         ⬅
         (self.clicker_receiver_cxn, self.clicker_sender_cxn) = multiprocessing.Pipe(duplex=False)
@@ -84,7 +90,6 @@ class BaseMatrix():
             else:
                 log.warning(f"Unrecognized message {o}")
                 
-        
         def midi_callback(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
             log.debug(f"Midi callback invoked with message: {decoded}")
@@ -161,8 +166,7 @@ class BaseMatrix():
     def blocking_loop(self):
 
         log.info(f"Running {self.form} at maximum {self.max_hz} Hz...")
-        offset_canvas = self.matrix.CreateFrameCanvas()
-
+        
         t_start = time.time()
         t_last = t_start
         
@@ -176,9 +180,8 @@ class BaseMatrix():
             else:
                 time.sleep(wait_time)    
             
-            matrix = self.form.step(total_elapsed_since_last_frame)
-            offset_canvas.SetImage(matrix)
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+            image = self.form.step(total_elapsed_since_last_frame)
+            self.set_framecanvas(image)
             
             while self.midi_receiver_cxn.poll(0):
                 value = self.midi_receiver_cxn.recv()
@@ -209,6 +212,6 @@ class BaseMatrix():
 
         
 if __name__ == "__main__":
-    b = BaseMatrix()
+    b = BaseRgb()
     b.blocking_loop()
 
