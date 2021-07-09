@@ -76,10 +76,10 @@ class Keys(Form):
 
     def step(self, dt) -> Image.Image:
         foreground = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
-        colorspace = np.zeros((Keys.NUM_NOTES, self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
+        colorspace = np.zeros((len(self.presses), self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         xs = np.linspace(start=0, stop=self.matrix_width, num=Keys.NUM_NOTES + 1, endpoint=True, dtype=np.uint8)
-        for k, v in self.presses.items():
-            index = k % Keys.NUM_NOTES
+        for nth_color, v in enumerate(self.presses.values()):
+            index = v.note % Keys.NUM_NOTES
             hue = index / Keys.NUM_NOTES
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0 if v else 0.0)
             pixel = (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
@@ -91,7 +91,8 @@ class Keys(Form):
 
             dt = time.time() - v.t
             wave_horizon = int(dt * self.wave_speed)
-            
+            pixel_dim = (np.uint8(127 * rgb[0]),np.uint8(127 * rgb[1]),np.uint8(127 * rgb[2]))
+
             wave_horizon_range_start = min(wave_horizon, colorspace.shape[2] + wave_horizon % self.wave_step)
             # From the range_start to 0, including zero
             for this_wave_traveled in range(wave_horizon_range_start, -1, -self.wave_step):
@@ -102,12 +103,12 @@ class Keys(Form):
                 if wave_lo >= 0:
                     lower_bound = max(0, wave_lo-self.wave_width)
                     visible_wave_width = (wave_lo + 1) - lower_bound
-                    colorspace[color, :, lower_bound:wave_lo+1, :] = np.tile( pixel , (self.matrix_height, visible_wave_width, 1))
+                    colorspace[nth_color, :, lower_bound:wave_lo+1, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
                 # These variables get reused / reset on this pass
                 if wave_hi < colorspace.shape[2]:
                     upper_bound = min(colorspace.shape[2], wave_hi+self.wave_width+1)
                     visible_wave_width = upper_bound - wave_hi
-                    colorspace[color, :, wave_hi:upper_bound, :] = np.tile( pixel , (self.matrix_height, visible_wave_width, 1))
+                    colorspace[nth_color, :, wave_hi:upper_bound, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
         # Return the vertical flip, origin at the top.
         
         background = np.mean(colorspace, axis=0, dtype=np.uint8)
