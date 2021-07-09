@@ -75,7 +75,8 @@ class Keys(Form):
             log.debug(f"Unhandled message: {value}")
 
     def step(self, dt) -> Image.Image:
-        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
+        foreground = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
+        background = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         xs = np.linspace(start=0, stop=self.matrix_width, num=Keys.NUM_NOTES + 1, endpoint=True, dtype=np.uint8)
         for k, v in self.presses.items():
             index = k % Keys.NUM_NOTES
@@ -84,13 +85,13 @@ class Keys(Form):
             pixel = (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
             lo = xs[index]
             hi = xs[index + 1] 
-            img[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
+            foreground[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
             
             dt = time.time() - v.t
             wave_horizon = int(dt * self.wave_speed)
             
             pixel_dim = (np.uint8(127 * rgb[0]),np.uint8(127 * rgb[1]),np.uint8(127 * rgb[2]))
-            wave_horizon_range_start = min(wave_horizon, img.shape[1] + wave_horizon % self.wave_step)
+            wave_horizon_range_start = min(wave_horizon, foreground.shape[1] + wave_horizon % self.wave_step)
             # From the range_start to 0, including zero
             for this_wave_traveled in range(wave_horizon_range_start, -1, -self.wave_step):
                 if this_wave_traveled < 0:
@@ -100,13 +101,14 @@ class Keys(Form):
                 if wave_lo >= 0:
                     lower_bound = max(0, wave_lo-self.wave_width)
                     visible_wave_width = (wave_lo + 1) - lower_bound
-                    img[:, lower_bound:wave_lo+1, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
+                    background[:, lower_bound:wave_lo+1, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
                 # These variables get reused / reset on this pass
-                if wave_hi < img.shape[1]:
-                    upper_bound = min(img.shape[1], wave_hi+self.wave_width+1)
+                if wave_hi < foreground.shape[1]:
+                    upper_bound = min(foreground.shape[1], wave_hi+self.wave_width+1)
                     visible_wave_width = upper_bound - wave_hi
-                    img[:, wave_hi:upper_bound, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
+                    background[:, wave_hi:upper_bound, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
         # Return the vertical flip, origin at the top.
-        return Image.fromarray(img) #.transpose(Image.FLIP_TOP_BOTTOM)
+        
+        return Image.fromarray(np.maximum(foreground, background)) #.transpose(Image.FLIP_TOP_BOTTOM)
 
 
