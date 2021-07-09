@@ -55,7 +55,7 @@ class Gravity(Form):
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
-        self.population = population
+        self.population = self.matrix_height * 2
         self.gravitational_constant = -0.08
         self.shape = Gravity.MAX_SHAPE * 0.5
         self.particles: Set[Elt] = set()
@@ -118,11 +118,11 @@ class Gravity(Form):
         return self.matrix_height / float(self.world_height)
 
     def _populate_particles(self):
-        room = self.population - len(self.particles)
+        room = random.randint(0, self.population - len(self.particles))
         if room <= 0:
             return
-        births = random.randint(0, room) # Divide by two to slow the release
-        for i in range(births):
+        births = random.randint(0, 1)
+        for _ in range(births):
             self.particles.add(
                 Elt(
                     x=self.world_width / 2,

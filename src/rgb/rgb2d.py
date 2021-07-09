@@ -118,11 +118,11 @@ class RGB2D():
         self.forms = (
             # timer.Timer(dimensions),
             # stripes.Stripes(dimensions),
-            stars.Stars(dimensions), 
             keys.Keys(dimensions), 
-            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
             gravity.Gravity(dimensions, 0.006, 32), 
             shape.Shape(dimensions), 
+            stars.Stars(dimensions), 
+            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
         )
         self.form_index = 0
                 
