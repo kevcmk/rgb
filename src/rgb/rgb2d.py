@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class BaseMatrix():
+class RGB2D():
 
     def parse_hzeller_rgb_args(self):
         rgb_args = {k:v for k,v in os.environ.items() if k.startswith("RUN_ARG_")}
@@ -214,6 +214,6 @@ class BaseMatrix():
 
         
 if __name__ == "__main__":
-    b = BaseRgb()
-    b.blocking_loop()
+    rgb2d = RGB2D()
+    rgb2d.blocking_loop()
 

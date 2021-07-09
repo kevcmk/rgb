@@ -17,9 +17,7 @@ import constants
 import imaqt
 from displays.rgbstrip import RGBStrip
 from forms.chase import Chase
-
-log = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
+from forms.keys import Keys
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -28,14 +26,15 @@ class RGB1D():
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.max_hz = 60
+        self.max_hz = 30
         self.height = int(os.environ["LED_COUNT"])
         self.display = RGBStrip(height=self.height)
         #                       ⬅
         (self.midi_receiver_cxn, self.midi_sender_cxn) = multiprocessing.Pipe(duplex=False)
 
         self.bootstrap_midi_listener()
-        self.form = Chase(self.height)
+        # self.form = Chase(self.height)
+        self.form = Keys((self.height, 1))
 
     def bootstrap_midi_listener(self):
         def midi_callback(client, userdata, msg):
@@ -78,12 +77,13 @@ class RGB1D():
     def render(self, total_elapsed_since_last_frame: float):
         image = self.form.step(total_elapsed_since_last_frame)
         for i in range(self.height):
+            rgb = image.getpixel((i,0))
             self.display.rgb_strip.setPixelColor(
                 i, 
                 Color(
-                    int(image[i,0]),
-                    int(image[i,1]),
-                    int(image[i,2])
+                    int(rgb[0]),
+                    int(rgb[1]),
+                    int(rgb[2])
                 )
             )
         self.display.rgb_strip.show()

@@ -121,7 +121,7 @@ class Gravity(Form):
         room = self.population - len(self.particles)
         if room <= 0:
             return
-        births = random.randint(0, room)
+        births = random.randint(0, room) # Divide by two to slow the release
         for i in range(births):
             self.particles.add(
                 Elt(
