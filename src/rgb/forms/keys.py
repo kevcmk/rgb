@@ -10,6 +10,7 @@ import time
 from dataclasses import dataclass
 from random import randrange
 from typing import Dict, List, Set, Tuple
+import datetime
 
 import numpy as np
 import numpy.typing as npt
@@ -53,10 +54,13 @@ class Keys(Form):
     
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
+        
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MAX_MIDI_VELOCITY
-            self.presses[note] = Press(t=time.time(), note=note, velocity=velocity)
+            self.presses[note] = Press(t=time.time(), 
+            note=note, 
+            velocity=velocity)
         elif value['type'] == 'note_off':
             note = value['note']
             if note in self.presses:
@@ -87,8 +91,6 @@ class Keys(Form):
             hi = xs[index + 1] 
             foreground[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
             
-            color = v.note % Keys.NUM_NOTES
-
             dt = time.time() - v.t
             wave_horizon = int(dt * self.wave_speed)
             pixel_dim = (np.uint8(127 * rgb[0]),np.uint8(127 * rgb[1]),np.uint8(127 * rgb[2]))
@@ -109,13 +111,13 @@ class Keys(Form):
                     upper_bound = min(colorspace.shape[2], wave_hi+self.wave_width+1)
                     visible_wave_width = upper_bound - wave_hi
                     colorspace[nth_color, :, wave_hi:upper_bound, :] = np.tile( pixel_dim , (self.matrix_height, visible_wave_width, 1))
-        # Return the vertical flip, origin at the top.
         
-        background = np.mean(colorspace, axis=0, dtype=np.uint8)
-        print(f"Backrground: {background.shape}, type: {background.dtype}")
-        blended = np.maximum(foreground, background)
-        print(f"Blended shape: {blended.shape}, type: {blended.dtype}")
+        if len(self.presses):
+            background = np.mean(colorspace, axis=0, dtype=np.uint8)
+            res = np.maximum(foreground, background)
+        else:
+            res = foreground
 
-        return Image.fromarray(blended) #.transpose(Image.FLIP_TOP_BOTTOM)
+        return Image.fromarray(res) #.transpose(Image.FLIP_TOP_BOTTOM)
 
 

@@ -16,21 +16,13 @@ from typing import Dict, NamedTuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
-from rgbmatrix import RGBMatrix, FrameCanvas
+from rgbmatrix import FrameCanvas, RGBMatrix
 
 import constants
 import imaqt
+from forms import gravity, keys, orbit, shape, stars, stripes, timer
 from hzel_samplebase import SampleBaseMatrixFactory
 from messages import Button, Dial, Switch
-
-from forms import gravity
-from forms import keys
-from forms import orbit
-from forms import shape
-from forms import stars
-from forms import stripes
-from forms import timer
-
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -102,8 +94,11 @@ class RGB2D():
                 log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
                 return
             self.midi_sender_cxn.send(o)
+            latency = f"(Latency {datetime.datetime.utcnow() - datetime.datetime.fromisoformat(o['midi_read_time'])})" \
+                if 'midi_read_time' in o \
+                else ''
+            log.debug(f"Received MIDI control message: {o} {latency}")
 
-            log.debug(f"Got midi control message: {o}")
         
         ima = imaqt.IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
