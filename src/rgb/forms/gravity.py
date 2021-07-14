@@ -49,16 +49,18 @@ class Elt:
 class Gravity(Form):
 
     # Shape := The bounds of the random.uniform x velocity
-    MAX_SHAPE = 0.002 # Random.uniform [-0.002, 0.002] m/s
+    MAX_SHAPE = 0.004 # Random.uniform [-0.004, 0.004] m/s
+    JITTERS = 32
 
     def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float, population: int):
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
-        self.population = self.matrix_height * 6
-        self.gravitational_constant = -0.08
-        self.shape = Gravity.MAX_SHAPE * 0.5
+        self.population = 484
+        self.adjust_gravitational_constant(constants.MIDI_DIAL_MAX / 2)
+        self.adjust_nozzle(constants.MIDI_DIAL_MAX / 2)
         self.particles: Set[Elt] = set()
+        self.jitters = [random.uniform(0.85,1.15) for _ in range(Gravity.JITTERS)]
           
         self.handlers = {
             "Button": {
@@ -70,9 +72,9 @@ class Gravity(Form):
     def midi_handler(self, value: Dict):
         # TODO
         if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[2]:
-            self.population = min(self.population + 1, 512)
+            self.population = max(self.population - 16, 0)
         elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[3]:
-            self.population = max(self.population - 1, 0)
+            self.population = min(self.population + 16, 512)
         elif value['type'] == 'control_change' and value['control'] == 14: 
             self.adjust_gravitational_constant(value['value'] / constants.MIDI_DIAL_MAX)
         elif value['type'] == 'control_change' and value['control'] == 15:
@@ -97,7 +99,7 @@ class Gravity(Form):
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         
-        self.gravitational_constant = -(math.exp(2.5 * constrained) - 0.95)
+        self.gravitational_constant = -(math.exp(constrained * 0.93) - 0.95)
     
     def adjust_nozzle(self, state):
         """
@@ -117,11 +119,11 @@ class Gravity(Form):
         # E.g. 1:4 would be 0.25
         return self.matrix_height / float(self.world_height)
 
-    def _birth_particles(self, dt: float):
-        room = random.randint(0, self.population - len(self.particles))
+    def _birth_particles(self):
+        room = self.population - len(self.particles)
         if room <= 0:
             return
-        births = dt / math.sqrt(abs(2 * self.gravitational_constant * self.matrix_height)) * self.population
+        births = random.randint(0, room) // 10
         for _ in range(int(births)):
             self.particles.add(
                 Elt(
@@ -150,8 +152,9 @@ class Gravity(Form):
         return Image.fromarray(img).transpose(Image.FLIP_TOP_BOTTOM)
 
     def step(self, dt: float):
-        self._birth_particles(dt)
-        for elt in self.particles:
+        self._birth_particles()
+        
+        for i, elt in enumerate(self.particles):
             elt.x = elt.x + elt.vx
 
             if elt.x > self.world_width:
@@ -169,7 +172,7 @@ class Gravity(Form):
 
             # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             # elt.vy = elt.vy + (-0.08 * dt) # Moon gravity
-            elt.y = elt.y + (elt.vy * dt)
+            elt.y = elt.y + (elt.vy * dt * self.jitters[i % Gravity.JITTERS])
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
         return self._render()
 

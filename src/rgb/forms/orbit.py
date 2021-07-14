@@ -80,11 +80,11 @@ class Orbit(Form):
         sun = Body(name="Sun", color=(255,255,0), x=self.world_width / 2, y = self.world_height / 4, vx = 0, vy = 0, mass=SUN_MASS_KILOGRAMS)
         earth = Body(name="Earth", color=(64,64,255), x=self.world_width / 2, y=sun.y - EARTH_PERIHELION_METERS, vx=EARTH_PERIHELION_VELOCITY_MS, vy=0, mass = EARTH_MASS_KILOGRAMS)
         mars = Body(name="Mars", color=(255,64,0), x=self.world_width / 2, y=sun.y + MARS_PERIHELION_METERS, vx=-MARS_PERIHELION_VELOCITY_MS, vy=0, mass = MARS_MASS_KILOGRAMS)
-        moon = Body(name="Moon", color=(180,180,180), x=self.world_width / 2, y = earth.y + MOON_PERIGEE_METERS, vx = earth.vx + MOON_PERIGEE_VELOCITY_MS, vy = 0, mass=MOON_MASS_KILOGRAMS)
+        # moon = Body(name="Moon", color=(180,180,180), x=self.world_width / 2, y = earth.y + MOON_PERIGEE_METERS, vx = earth.vx + MOON_PERIGEE_VELOCITY_MS, vy = 0, mass=MOON_MASS_KILOGRAMS)
         self.bodies: Set[Body] = {
             earth,
             mars,
-            moon,
+            # moon,
             sun,
         }
                  

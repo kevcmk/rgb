@@ -113,8 +113,8 @@ class RGB2D():
         self.forms = (
             # timer.Timer(dimensions),
             # stripes.Stripes(dimensions),
-            keys.Keys(dimensions), 
             gravity.Gravity(dimensions, 0.006, 32), 
+            keys.Keys(dimensions), 
             shape.Shape(dimensions), 
             stars.Stars(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
