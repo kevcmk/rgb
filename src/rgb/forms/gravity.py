@@ -55,7 +55,7 @@ class Gravity(Form):
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
-        self.population = self.matrix_height * 2
+        self.population = self.matrix_height * 6
         self.gravitational_constant = -0.08
         self.shape = Gravity.MAX_SHAPE * 0.5
         self.particles: Set[Elt] = set()
@@ -117,12 +117,12 @@ class Gravity(Form):
         # E.g. 1:4 would be 0.25
         return self.matrix_height / float(self.world_height)
 
-    def _populate_particles(self):
+    def _birth_particles(self, dt: float):
         room = random.randint(0, self.population - len(self.particles))
         if room <= 0:
             return
-        births = random.randint(0, 1)
-        for _ in range(births):
+        births = dt / math.sqrt(abs(2 * self.gravitational_constant * self.matrix_height)) * self.population
+        for _ in range(int(births)):
             self.particles.add(
                 Elt(
                     x=self.world_width / 2,
@@ -150,7 +150,7 @@ class Gravity(Form):
         return Image.fromarray(img).transpose(Image.FLIP_TOP_BOTTOM)
 
     def step(self, dt: float):
-        self._populate_particles()
+        self._birth_particles(dt)
         for elt in self.particles:
             elt.x = elt.x + elt.vx
 
@@ -170,7 +170,6 @@ class Gravity(Form):
             # elt.vy = elt.vy + (-1.62 * dt) # Moon gravity
             # elt.vy = elt.vy + (-0.08 * dt) # Moon gravity
             elt.y = elt.y + (elt.vy * dt)
-            log.debug(elt)
         self.particles = set(filter(lambda x: x.y >= 0, self.particles))
         return self._render()
 
