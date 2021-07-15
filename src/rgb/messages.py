@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import List, NamedTuple
 
 class Button(NamedTuple):
     index: int
@@ -11,3 +11,8 @@ class Switch(NamedTuple):
 class Dial(NamedTuple):
     index: int
     state: float
+
+
+class Spectrum(NamedTuple):
+    index: int
+    state: List[float]

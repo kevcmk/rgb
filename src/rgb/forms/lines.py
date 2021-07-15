@@ -10,7 +10,6 @@ import time
 from dataclasses import dataclass
 from random import randrange
 from typing import Dict, List, Set, Tuple
-import constants
 
 import numpy as np
 import numpy.typing as npt
@@ -30,14 +29,13 @@ class Press():
     t: float
     note: int
     velocity: int
-    bounding_circle_x: int
-    bounding_circle_y: int
-    bounding_circle_r: int
-    n_sides: int
-    rotation: int 
+    x1: int
+    y1: int
+    x2: int
+    y2: int
     fill: Tuple[int, int, int]
 
-class Shape(Form):
+class Lines(Form):
 
     NUM_NOTES = 12
 
@@ -60,26 +58,28 @@ class Shape(Form):
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
             
-            hue = (note % Shape.NUM_NOTES) / Shape.NUM_NOTES
+            hue = (note % Lines.NUM_NOTES) / Lines.NUM_NOTES
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
             color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
+            case = random.randint(0,5)
+            if case == 0:
+                (x1, y1, x2, y2) = (random.randint(0,w), 0, 0, random.randint(0,h))
+            elif case == 1:
+                (x1, y1, x2, y2) = (random.randint(0,w), 0, self.matrix_height - 1, random.randint(0,self.matrix_height))
             self.presses[note] = Press(
                 t=time.time(), 
                 note=note, 
                 velocity=velocity,
-                bounding_circle_x=random.randint(0,self.matrix_width),
-                bounding_circle_y=random.randint(0,self.matrix_height),
-                bounding_circle_r=random.randint(10,30),
-                n_sides=random.randint(3, 9),
-                rotation=random.randint(0, 360), 
+                x1=x1,
+                y1=y1,
+                x2=x2,
+                y2=y2,
                 fill=color
             )
         elif value['type'] == 'note_off':
             note = value['note']
             if note in self.presses:
                 del self.presses[note]
-        if value['type'] == 'control_change' and value['control'] == 14: 
-            self.grow = value['value'] / 4
         else:
             log.debug(f"Unhandled message: {value}")
 
@@ -91,8 +91,7 @@ class Shape(Form):
         draw_context = ImageDraw.Draw(img)
         now = time.time()
         for press in sorted(self.presses.values(), key=lambda x: x.t):
-            r = press.bounding_circle_r + (now - press.t) * self.grow
-            draw_context.regular_polygon((press.bounding_circle_x,press.bounding_circle_y,r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
+            draw_context.line((press.x1,press.y1,press.x2,press.y2), fill=press.fill)
         # Return the vertical flip, origin at the top.
         return img
 

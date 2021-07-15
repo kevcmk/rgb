@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from random import randrange
 from typing import Dict, List, Set, Tuple
 import datetime
+import constants
 
 import numpy as np
 import numpy.typing as npt
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-MAX_MIDI_VELOCITY = 127
+MIDI_DIAL_MAX = 127
 @dataclass
 class Press():
     t: float
@@ -57,7 +58,7 @@ class Keys(Form):
         
         if value['type'] == 'note_on':
             note = value['note']
-            velocity = value['velocity'] / MAX_MIDI_VELOCITY
+            velocity = value['velocity'] / MIDI_DIAL_MAX
             self.presses[note] = Press(t=time.time(), 
             note=note, 
             velocity=velocity)

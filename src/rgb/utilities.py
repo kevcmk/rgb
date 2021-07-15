@@ -14,3 +14,6 @@ def constrain(x, lower, upper):
         log.warning(f"Input, {x}, outside of acceptable bounds of [{lower}, {upper}]")
         return min(upper, max(lower, x))
     return x
+
+clamped_add = lambda x, y: min(1.0, x + y)
+clamped_subtract = lambda x, y: max(0.0, x - y)

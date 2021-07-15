@@ -20,9 +20,9 @@ from rgbmatrix import FrameCanvas, RGBMatrix
 
 import constants
 import imaqt
-from forms import gravity, keys, orbit, shape, stars, stripes, timer
+from forms import gravity, keys, orbit, shape, stars, stripes, timer, audio_spectrogram
 from hzel_samplebase import SampleBaseMatrixFactory
-from messages import Button, Dial, Switch
+from messages import Button, Dial, Switch, Spectrum
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -81,6 +81,9 @@ class RGB2D():
             elif o["message"] == "dial":
                 log.info(f"Got dial change: {o}")
                 self.clicker_sender_cxn.send(Dial(index=o["index"], state=o["state"]))
+            elif o["message"] == "spectrum":
+                log.info(f"Got dial change: {o}")
+                self.clicker_sender_cxn.send(Spectrum(index=o["index"], state=o["state"]))
             else:
                 log.warning(f"Unrecognized message {o}")
                 
@@ -113,6 +116,7 @@ class RGB2D():
         self.forms = (
             # timer.Timer(dimensions),
             # stripes.Stripes(dimensions),
+            audio_spectrogram.AudioSpectrogram(dimensions),
             gravity.Gravity(dimensions, 0.006, 32), 
             keys.Keys(dimensions), 
             shape.Shape(dimensions), 
