@@ -75,6 +75,7 @@ class AudioSpectrogram(Form):
             effective_hi += 1 
         effective_span = effective_hi - effective_lo
         xs = np.linspace(start=0, stop=self.matrix_height, num=effective_span + 1, endpoint=True, dtype=np.uint8)
+        log.warning(f"effective_span: {effective_span}; linspace: {str(xs)}")
         for index, v in enumerate(self.state[effective_lo:effective_hi]):
             lo = xs[index]
             hi = xs[index + 1] 
@@ -85,7 +86,6 @@ class AudioSpectrogram(Form):
             hue = x / 12
             rgb = colorsys.hsv_to_rgb(hue, 1.0, v)
             pixel = (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
-            
             img[lo:hi,:,:] = np.tile( pixel , (hi - lo, self.matrix_width, 1))
         
         
