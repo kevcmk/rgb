@@ -43,7 +43,7 @@ class AudioSpectrogram(Form):
         self.presses = dict()
         self.last_observed_lo_dial = 0
         self.last_observed_hi_dial = 127
-        self.state = []
+        self.state = [random.random() for i in range(150)]
         self.handlers = {
             "Spectrum": {
                 0: self.state_handler 
@@ -75,14 +75,18 @@ class AudioSpectrogram(Form):
             effective_hi += 1 
         effective_span = effective_hi - effective_lo
         xs = np.linspace(start=0, stop=self.matrix_width, num=effective_span + 1, endpoint=True, dtype=np.uint8)
-        for index, v in enumerate(self.state[effective_lo:effective_hi:-1]):
+        for index, v in enumerate(self.state[effective_lo:effective_hi]):
+            lo = xs[index]
+            hi = xs[index + 1] 
+            if hi - lo == 0:
+                log.info(f"Skipping index {index}")
+                continue
             x = index % 12
             hue = x / 12
             rgb = colorsys.hsv_to_rgb(hue, 1.0, v)
             pixel = (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
-            lo = xs[index]
-            hi = xs[index + 1] 
-            img[index,:,:] = np.tile( pixel , (self.matrix_width, 1))
+            # img[lo:hi,:,:] = np.tile( pixel , (hi - lo, self.matrix_width, 1))
+            img[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
         
         
         return Image.fromarray(img) #.transpose(Image.FLIP_TOP_BOTTOM)
