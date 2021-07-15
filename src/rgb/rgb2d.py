@@ -1,6 +1,7 @@
 
 import colorsys
 import datetime
+from constants import button_mod, button_sus, pad
 import json
 import logging
 import multiprocessing
@@ -18,7 +19,6 @@ import numpy.typing as npt
 from PIL import Image
 from rgbmatrix import FrameCanvas, RGBMatrix
 
-import constants
 import imaqt
 from forms import gravity, keys, orbit, shape, stars, stripes, timer, audio_spectrogram
 from hzel_samplebase import SampleBaseMatrixFactory
@@ -140,6 +140,11 @@ class RGB2D():
     def form(self):
         return self.forms[self.form_index]
     
+    def first_form(self):
+        # So all sync to same form
+        self.form.cleanup()
+        self.form_index = 0
+    
     # Button handler, when true change state
     def next_form(self, state):
         if state:
@@ -154,12 +159,17 @@ class RGB2D():
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
-        if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[0]:
+        if pad(0, value):
             # pad 0
             self.previous_form(True)
-        elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[1]:
+        elif pad(1, value):
             # pad 1
             self.next_form(True)
+        elif button_mod(value):
+            self.first_form()
+        elif button_sus(value):
+            log.warning("Invoking exit on Suspend push")
+            sys.exit(1)
         # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
         #     self.max_hz = value['value'] * 3 # [0,381]
         #     log.info(f"Set max_hz to {self.max_hz}")
