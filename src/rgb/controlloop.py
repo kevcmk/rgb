@@ -15,6 +15,7 @@ import imaqt
 from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer)
 from rgb.display.basedisplay import BaseDisplay
 from rgb.messages import Button, Dial, Spectrum, Switch
+from rgb.utilities import loopwait
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -170,13 +171,8 @@ class ControlLoop():
         
         while True:
 
-            now = time.time()
-            total_elapsed_since_last_frame = now - t_last
-            t_last, wait_time = now, self.max_dt - total_elapsed_since_last_frame
-            if wait_time < 0:
-                log.debug(f"Frame dt exceeded: {wait_time}")
-            else:
-                time.sleep(wait_time)    
+            # TODO After?
+            t_last, total_elapsed_since_last_frame = loopwait(t_last, self.max_dt)    
             
             image = self.form.step(total_elapsed_since_last_frame)
             self.display.display(image)

@@ -24,8 +24,9 @@ class Iconography(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
-        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", 18)
-        self.palette = "℔℥⚘⚙︎⚖︎⚕︎⚚☥⚜︎☤☦︎✦✧⚨⚩⚦⚤⚣⚢⚲♇♆♂︎♁♀︎☿⛢★★※※✹✸✺✷✵⎈⚡︎"
+        self.icon_size = 18
+        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", self.icon_size)
+        self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
         self.handlers = {}
         
     def _render(self) -> Image.Image:
@@ -45,10 +46,4 @@ class Iconography(BaseForm):
 
     def step(self, dt: float):
         return self._render()
-
-# Main function
-if __name__ == "__main__":
-    gravity = Gravity()
-    if not gravity.process():
-        gravity.print_help()
 

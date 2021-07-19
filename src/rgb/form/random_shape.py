@@ -12,7 +12,7 @@ from typing import Dict, Tuple, Union
 
 import numpy as np
 from rgb.form.baseform import BaseForm
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from rgb.utilities import constrain
 
 log = logging.getLogger(__name__)
@@ -123,7 +123,23 @@ class RandomOutlineShape(RandomShape):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=press.color, outline=None)
         
-class RandomSolidShape(RandomShape):
+class RandomIcon(RandomShape):
+
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        self.icon_size = 18
+        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", self.icon_size)
+        self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
+        
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
-        draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=press.color, outline=None)
+        x = press.position_x
+        y = press.position_y
+        elt_index = int((press.t % 1) * len(self.palette))
+        elt = self.palette[elt_index]
+        draw_context.text((x,y), 
+            text=elt, 
+            fill=(255, 0, 0), 
+            anchor="mm",
+            font=self.font
+        )
         

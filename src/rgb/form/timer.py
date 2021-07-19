@@ -82,11 +82,3 @@ class Timer(BaseForm):
 
     
        
-
-
-# Main function
-if __name__ == "__main__":
-    gravity = Gravity()
-    if not gravity.process():
-        gravity.print_help()
-
