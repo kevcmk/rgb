@@ -114,12 +114,12 @@ class RGB2D():
 
         dimensions = (self.matrix_width, self.matrix_height)
         self.forms = (
-            # timer.Timer(dimensions),
             # stripes.Stripes(dimensions),
+            shape.Shape(dimensions), 
+            timer.Timer(dimensions),
             audio_spectrogram.AudioSpectrogram(dimensions),
             gravity.Gravity(dimensions, 0.006, 32), 
             keys.Keys(dimensions), 
-            shape.Shape(dimensions), 
             stars.Stars(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
         )
@@ -156,20 +156,20 @@ class RGB2D():
             self.form.cleanup()
             self.form_index = (self.form_index - 1) % len(self.forms)
     
-    def midi_handler(self, value: Dict):
+    #def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
-        if pad(0, value):
-            # pad 0
-            self.previous_form(True)
-        elif pad(1, value):
-            # pad 1
-            self.next_form(True)
-        elif button_mod(value):
-            self.first_form()
-        elif button_sus(value):
-            log.warning("Invoking exit on Suspend push")
-            sys.exit(1)
+        # # if pad(0, value):
+        # #     # pad 0
+        # #     self.previous_form(True)
+        # # elif pad(1, value):
+        # #     # pad 1
+        # #     self.next_form(True)
+        # elif button_mod(value):
+        #     self.first_form()
+        # elif button_sus(value):
+        #     log.warning("Invoking exit on Suspend push")
+        #     sys.exit(1)
         # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
         #     self.max_hz = value['value'] * 3 # [0,381]
         #     log.info(f"Set max_hz to {self.max_hz}")
@@ -199,7 +199,7 @@ class RGB2D():
                 log.info(f"midi_receiver_cxn received: {value}")
                 # If form midi handler goes first, then a pad strike that is also a valid key press does not induce that form's key's effect.
                 self.form.midi_handler(value)
-                self.midi_handler(value)
+                #self.midi_handler(value)
             
             while self.clicker_receiver_cxn.poll(0):
                 value = self.clicker_receiver_cxn.recv()

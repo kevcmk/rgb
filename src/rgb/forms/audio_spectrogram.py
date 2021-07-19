@@ -32,10 +32,9 @@ class AudioSpectrogram(Form):
     def state_handler(self, spectrum: List[float]):
         log.warning(f"Max State: {max(spectrum)}")
         if self.state:
-            self.state = [clamped_add(x,y) for x,y in zip(spectrum, self.state)]
+            self.state = [clamped_add(x, y * self.gain) for x,y in zip(spectrum, self.state)]
         else:
             self.state = [min(1.0, x) for x in spectrum]
-        
 
     def __init__(self, dimensions: Tuple[int, int]):
         self.decay_per_s = 2.0
@@ -43,13 +42,13 @@ class AudioSpectrogram(Form):
         self.presses = dict()
         self.last_observed_lo_dial = 0
         self.last_observed_hi_dial = 127
+        self.gain = 1.0
         self.state = [random.random() for i in range(150)]
         self.handlers = {
             "Spectrum": {
                 0: self.state_handler 
             }
         }
-
     
     def midi_handler(self, value: Dict):
         if value['type'] == 'control_change' and value['control'] == 14: 
@@ -60,6 +59,10 @@ class AudioSpectrogram(Form):
             proportion = value['value'] / MIDI_DIAL_MAX
             # Middle is 2/s, high 4/s, lo is 0/s
             self.decay_per_s = proportion * 4
+        elif value['type'] == 'control_change' and value['control'] == 17:
+            proportion = value['value'] / MIDI_DIAL_MAX
+            # Middle is 1
+            self.gain = (value['value'] * 2) / MIDI_DIAL_MAX
 
     def step(self, dt) -> Image.Image:
         decay = dt * self.decay_per_s
@@ -75,12 +78,10 @@ class AudioSpectrogram(Form):
             effective_hi += 1 
         effective_span = effective_hi - effective_lo
         xs = np.linspace(start=0, stop=self.matrix_height, num=effective_span + 1, endpoint=True, dtype=np.uint8)
-        log.warning(f"effective_span: {effective_span}; linspace: {str(xs)}")
-        for index, v in enumerate(self.state[effective_lo:effective_hi]):
+        for index, v in enumerate(reversed(self.state[effective_lo:effective_hi])):
             lo = xs[index]
             hi = xs[index + 1] 
             if hi - lo == 0:
-                log.info(f"Skipping index {index}")
                 continue
             x = index % 12
             hue = x / 12

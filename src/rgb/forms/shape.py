@@ -45,6 +45,8 @@ class Shape(Form):
         (self.matrix_width, self.matrix_height) = dimensions
         self.presses = dict()
         self.grow = 0
+        self.grow_ratio = 2
+        self.shape_ratio = 2
         self.handlers = {
             "Dial": {
                #0: lambda state: self.adjust_ffw(state),
@@ -59,7 +61,7 @@ class Shape(Form):
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
-            
+            # 21 , 108
             hue = (note % Shape.NUM_NOTES) / Shape.NUM_NOTES
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
             color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
@@ -69,7 +71,7 @@ class Shape(Form):
                 velocity=velocity,
                 bounding_circle_x=random.randint(0,self.matrix_width),
                 bounding_circle_y=random.randint(0,self.matrix_height),
-                bounding_circle_r=random.randint(10,30),
+                bounding_circle_r=int(5 * math.log(109 - note, self.shape_ratio) + 1),
                 n_sides=random.randint(3, 9),
                 rotation=random.randint(0, 360), 
                 fill=color
@@ -78,8 +80,15 @@ class Shape(Form):
             note = value['note']
             if note in self.presses:
                 del self.presses[note]
-        if value['type'] == 'control_change' and value['control'] == 14: 
+        elif value['type'] == 'control_change' and value['control'] == 14: 
             self.grow = value['value'] / 4
+            log.debug('Grow: {self.grow}')
+        elif value['type'] == 'control_change' and value['control'] == 15: 
+            self.grow_ratio = max(2 / 32, (value['value'] / 32)) + 1
+            log.debug('Grow Ratio: {self.grow_ratio}')
+        elif value['type'] == 'control_change' and value['control'] == 16: 
+            self.shape_ratio = max(2 / 32, (value['value'] / 32)) + 1
+            log.debug('Grow Ratio: {self.grow_ratio}')
         else:
             log.debug(f"Unhandled message: {value}")
 
@@ -91,8 +100,11 @@ class Shape(Form):
         draw_context = ImageDraw.Draw(img)
         now = time.time()
         for press in sorted(self.presses.values(), key=lambda x: x.t):
-            r = press.bounding_circle_r + (now - press.t) * self.grow
-            draw_context.regular_polygon((press.bounding_circle_x,press.bounding_circle_y,r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
+            note_growfactor = math.log(press.note, self.grow_ratio)
+            r = press.bounding_circle_r + (now - press.t) * (self.grow * note_growfactor) + 1
+            # draw_context.regular_polygon((press.bounding_circle_x,press.bounding_circle_y,r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
+            #draw_context.ellipse((press.bounding_circle_x,press.bounding_circle_y,r), press.n_sides, rotation=press.rotation, fill=press.fill, outline=None)
+            draw_context.ellipse((press.bounding_circle_x - r, press.bounding_circle_y - r, press.bounding_circle_x + r, press.bounding_circle_y + r), fill=None, outline=press.fill)
         # Return the vertical flip, origin at the top.
         return img
 

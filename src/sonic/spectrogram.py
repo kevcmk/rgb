@@ -28,10 +28,7 @@ ima = IMAQT.factory()
 mqtt_channel = os.environ.get("MIDI_INPUT_MQTT_CHANNEL", "black")
 ima.connect()
 
-try:
-    columns, _ = shutil.get_terminal_size()
-except AttributeError:
-    columns = 80
+columns = 80
 
 default_device = None
 default_block_duration=50    
@@ -74,6 +71,10 @@ def callback(indata, frames, time, status):
     #     print('\x1b[34;40m', text.center(columns, '#'),
     #             '\x1b[0m', sep='')
     if any(indata):
+        ms = int(time.inputBufferAdcTime * 100)
+        if ms % 4 != 0:
+            # Only emit 1/n of the time
+            return
         magnitude = np.abs(np.fft.rfft(indata[:, 0], n=fftsize))
         magnitude *= default_gain / fftsize
         
