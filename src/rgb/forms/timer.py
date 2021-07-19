@@ -15,9 +15,9 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-from form import Form
+from rgb.form import Form
 
-from messages import Button, Dial, Switch
+from rgb.messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

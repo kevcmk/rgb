@@ -7,7 +7,7 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from rgb import orbit
+from rgb.forms import orbit
 
 SECONDS_PER_MONTH = 86400 * 30 # Using this allows us to use 1 month per second
 hz = 60
@@ -15,12 +15,12 @@ dt = 1/hz
 canvas_scale = 6
 matrix_height = 64
 matrix_width = 32
-g = orbit.Orbit(matrix_width=32, matrix_height=64, ffw=1)
+g = orbit.Orbit((32, 64), fast_forward_scale=1)
 
 root = Tk()      
 canvas = Canvas(root, width = matrix_width * canvas_scale, height = matrix_height * canvas_scale)      
 canvas.pack()      
-5
+
 while True:
     img = g.step(dt)
     img_larger = img.resize((img.width * canvas_scale, img.height * canvas_scale),resample=0).transpose(Image.FLIP_TOP_BOTTOM)

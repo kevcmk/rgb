@@ -7,7 +7,7 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'rgb')))
 
-from forms import keys
+from rgb.forms import keys
 
 hz = 30
 dt = 1/hz

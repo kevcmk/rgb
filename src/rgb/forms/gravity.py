@@ -16,9 +16,9 @@ import numpy as np
 import numpy.typing as npt
 
 import constants
-from messages import Dial
-from utilities import constrain
-from form import Form
+from rgb.messages import Dial
+from rgb.utilities import constrain
+from rgb.form import Form
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

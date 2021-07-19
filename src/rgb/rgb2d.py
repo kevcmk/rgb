@@ -20,9 +20,9 @@ from PIL import Image
 from rgbmatrix import FrameCanvas, RGBMatrix
 
 import imaqt
-from forms import gravity, keys, orbit, shape, stars, stripes, timer, audio_spectrogram
+from rgb.forms import gravity, keys, orbit, random_shape, stars, stripes, timer, audio_spectrogram
 from hzel_samplebase import SampleBaseMatrixFactory
-from messages import Button, Dial, Switch, Spectrum
+from rgb.messages import Button, Dial, Switch, Spectrum
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -115,7 +115,9 @@ class RGB2D():
         dimensions = (self.matrix_width, self.matrix_height)
         self.forms = (
             # stripes.Stripes(dimensions),
-            shape.Shape(dimensions), 
+            random_shape.RandomSolidShape(dimensions), 
+            random_shape.RandomOutlineShape(dimensions), 
+            random_shape.RandomOutlineCircle(dimensions), 
             timer.Timer(dimensions),
             audio_spectrogram.AudioSpectrogram(dimensions),
             gravity.Gravity(dimensions, 0.006, 32), 
