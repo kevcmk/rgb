@@ -1,7 +1,7 @@
 
 import colorsys
 import datetime
-from constants import button_mod, button_sus, pad
+from rgb.display.hzelmatrix import HzelMatrix
 import json
 import logging
 import multiprocessing
@@ -12,51 +12,24 @@ from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
 from json.decoder import JSONDecodeError
-from typing import Dict, NamedTuple
-
-import numpy as np
-import numpy.typing as npt
-from PIL import Image
-from rgbmatrix import FrameCanvas, RGBMatrix
+from typing import Dict, NamedTuple, Optional
 
 import imaqt
-from rgb.forms import gravity, keys, orbit, random_shape, stars, stripes, timer, audio_spectrogram
-from hzel_samplebase import SampleBaseMatrixFactory
-from rgb.messages import Button, Dial, Switch, Spectrum
+from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer)
+from rgb.display.basedisplay import BaseDisplay
+from rgb.messages import Button, Dial, Spectrum, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class RGB2D():
+class ControlLoop():
 
-    def parse_hzeller_rgb_args(self):
-        rgb_args = {k:v for k,v in os.environ.items() if k.startswith("RUN_ARG_")}
-        for k,v in rgb_args.items():
-            log.debug(f"Parsing rgb_arg: {k}: {v}")
-            argparse_style_arg = "--" + k.replace("RUN_ARG_", "").replace("_", "-").lower()
-            log.info(f"Arg-parsing: {argparse_style_arg}: {v}")
-            sys.argv.extend([argparse_style_arg, v])
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
+    def __init__(self, display: BaseDisplay):
         self.max_hz = 60
-        
-        self.matrix_width = int(os.environ["MATRIX_WIDTH"])
-        self.matrix_height = int(os.environ["MATRIX_HEIGHT"])
+        self.display = display
 
-        self.parse_hzeller_rgb_args()
-        self.matrix: RGBMatrix = SampleBaseMatrixFactory().from_argparse()
-        # Documentation: https://github.com/hzeller/rpi-rgb-led-matrix/blob/dfc27c15c224a92496034a39512a274744879e86/include/led-matrix.h#L204
-        # for explanation
-        # Explanation: https://github.com/hzeller/rpi-rgb-led-matrix/blob/dfc27c15c224a92496034a39512a274744879e86/bindings/python/samples/rotating-block-generator.py#L42
-        self.offset_canvas: FrameCanvas = self.matrix.CreateFrameCanvas()
-        def _set_framecanvas(image: Image.Image) -> FrameCanvas:
-            self.offset_canvas.SetImage(image)
-            self.offset_canvas = self.matrix.SwapOnVSync(self.offset_canvas)
-        self.set_framecanvas = _set_framecanvas
-                    
+    def initialize_mqtt(self):
         #                         ⬅
         (self.clicker_receiver_cxn, self.clicker_sender_cxn) = multiprocessing.Pipe(duplex=False)
         #                         ⬅
@@ -102,17 +75,8 @@ class RGB2D():
                 else ''
             log.debug(f"Received MIDI control message: {o} {latency}")
 
-        
-        ima = imaqt.IMAQT.factory()
-        button_topic = os.environ["CONTROL_TOPIC"]
-        ima.client.message_callback_add(button_topic, button_callback)
-        midi_topic = os.environ["MIDI_CONTROL_TOPIC"]
-        ima.client.message_callback_add(midi_topic, midi_callback)
-        ima.connect()
-        ima.client.subscribe(button_topic)
-        ima.client.subscribe(midi_topic)
-
-        dimensions = (self.matrix_width, self.matrix_height)
+       
+        dimensions = (self.display.width, self.display.height)
         self.forms = (
             # stripes.Stripes(dimensions),
             random_shape.RandomSolidShape(dimensions), 
@@ -132,6 +96,15 @@ class RGB2D():
                 2: lambda state: self.next_form(state)
             }
         }
+
+        ima = imaqt.IMAQT.factory()
+        button_topic = os.environ["CONTROL_TOPIC"]
+        ima.client.message_callback_add(button_topic, button_callback)
+        midi_topic = os.environ["MIDI_CONTROL_TOPIC"]
+        ima.client.message_callback_add(midi_topic, midi_callback)
+        ima.connect()
+        ima.client.subscribe(button_topic)
+        ima.client.subscribe(midi_topic)
 
     @property
     def max_dt(self):
@@ -194,37 +167,33 @@ class RGB2D():
                 time.sleep(wait_time)    
             
             image = self.form.step(total_elapsed_since_last_frame)
-            self.set_framecanvas(image)
+            self.display.display(image)
             
-            while self.midi_receiver_cxn.poll(0):
-                value = self.midi_receiver_cxn.recv()
-                log.info(f"midi_receiver_cxn received: {value}")
-                # If form midi handler goes first, then a pad strike that is also a valid key press does not induce that form's key's effect.
-                self.form.midi_handler(value)
-                #self.midi_handler(value)
-            
-            while self.clicker_receiver_cxn.poll(0):
-                value = self.clicker_receiver_cxn.recv()
-                log.info(f"clicker_receiver_cxn received: {value}")
-                
-                message_type = type(value).__name__
-                index = value.index
-                state = value.state
-                
-                log.info(f"{message_type} -> {index}, {state}")        
-                for target in (self, self.form):
-                    try:            
-                        target.handlers[message_type][index](state)
-                    except KeyError as e:
-                        log.debug(f"No handler for {value} on {target}")
-                        continue
-                    else: 
-                        # If a handler succeeds, break.
-                        log.debug(f"Handler succeeded for {target}")
-                        break
+            if self.midi_receiver_cxn:
+                while self.midi_receiver_cxn.poll(0):
+                    value = self.midi_receiver_cxn.recv()
+                    log.info(f"midi_receiver_cxn received: {value}")
+                    # If form midi handler goes first, then a pad strike that is also a valid key press does not induce that form's key's effect.
+                    self.form.midi_handler(value)
+                    #self.midi_handler(value)
 
-        
-if __name__ == "__main__":
-    rgb2d = RGB2D()
-    rgb2d.blocking_loop()
-
+            if self.clicker_receiver_cxn:    
+                while self.clicker_receiver_cxn.poll(0):
+                    value = self.clicker_receiver_cxn.recv()
+                    log.info(f"clicker_receiver_cxn received: {value}")
+                    
+                    message_type = type(value).__name__
+                    index = value.index
+                    state = value.state
+                    
+                    log.info(f"{message_type} -> {index}, {state}")        
+                    for target in (self, self.form):
+                        try:            
+                            target.handlers[message_type][index](state)
+                        except KeyError as e:
+                            log.debug(f"No handler for {value} on {target}")
+                            continue
+                        else: 
+                            # If a handler succeeds, break.
+                            log.debug(f"Handler succeeded for {target}")
+                            break

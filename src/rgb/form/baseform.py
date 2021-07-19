@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 
-class Form(ABC):
+class BaseForm(ABC):
 
     @abstractmethod
     def step(self, dt: float) -> Union[Image.Image,np.ndarray]:

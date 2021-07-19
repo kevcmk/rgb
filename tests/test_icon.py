@@ -7,15 +7,14 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from rgb.form import orbit
+from rgb.form.iconography import Iconography
 
-SECONDS_PER_MONTH = 86400 * 30 # Using this allows us to use 1 month per second
 hz = 60
 dt = 1/hz
 canvas_scale = 6
 matrix_height = 64
 matrix_width = 32
-g = orbit.Orbit((32, 64), fast_forward_scale=1)
+g = Iconography((32, 64))
 
 root = Tk()      
 canvas = Canvas(root, width = matrix_width * canvas_scale, height = matrix_height * canvas_scale)      
