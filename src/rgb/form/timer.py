@@ -15,19 +15,19 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 from rgb.messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-class Timer(Form):
+class Timer(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
         self.t_stop: Optional[datetime.datetime] = None
-        self.font = ImageFont.truetype("rgb/fonts/DejaVuSans.ttf", 14)
+        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", 14)
         self.enable_visual = True
 
         self.handlers = {

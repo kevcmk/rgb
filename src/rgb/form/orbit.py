@@ -16,7 +16,7 @@ import math
 import numpy as np
 import numpy.typing as npt
 
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 from rgb.messages import Dial
 from rgb.utilities import constrain
 
@@ -70,7 +70,7 @@ class Body:
     def rgb(self) -> Tuple[np.uint8,np.uint8,np.uint8]:
         return (np.uint8(self.color[0]),np.uint8(self.color[1]),np.uint8(self.color[2]))
     
-class Orbit(Form):
+class Orbit(BaseForm):
     def __init__(self, dimensions: Tuple[int, int], fast_forward_scale: float):
         self.fast_forward_scale = fast_forward_scale
         (self.matrix_width, self.matrix_height) = dimensions

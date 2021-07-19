@@ -1,18 +1,14 @@
 
-import colorsys
 import datetime
-from rgb.display.hzelmatrix import HzelMatrix
+
 import json
 import logging
 import multiprocessing
+from multiprocessing import connection
 import os
-import sys
 import time
-from dataclasses import dataclass
-from datetime import timedelta
-from decimal import Decimal
 from json.decoder import JSONDecodeError
-from typing import Dict, NamedTuple, Optional
+from typing import Optional
 
 import imaqt
 from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer)
@@ -29,6 +25,28 @@ class ControlLoop():
         self.max_hz = 60
         self.display = display
 
+        self.clicker_receiver_cxn: Optional[connection.Connection] = None
+        self.clicker_sender_cxn: Optional[connection.Connection] = None
+        self.midi_receiver_cxn: Optional[connection.Connection] = None
+        self.midi_sender_cxn: Optional[connection.Connection] = None
+
+        dimensions = (self.display.width, self.display.height)
+        
+        self.forms = (
+            # stripes.Stripes(dimensions),
+            random_shape.RandomSolidShape(dimensions), 
+            random_shape.RandomOutlineShape(dimensions), 
+            random_shape.RandomOutlineCircle(dimensions), 
+            timer.Timer(dimensions),
+            audio_spectrogram.AudioSpectrogram(dimensions),
+            gravity.Gravity(dimensions, 0.006, 32), 
+            keys.Keys(dimensions), 
+            stars.Stars(dimensions), 
+            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
+        )
+        self.form_index = 0
+                
+
     def initialize_mqtt(self):
         #                         ⬅
         (self.clicker_receiver_cxn, self.clicker_sender_cxn) = multiprocessing.Pipe(duplex=False)
@@ -38,6 +56,10 @@ class ControlLoop():
         def button_callback(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
             log.debug(f"Button callback invoked with message: {decoded}")
+
+            if not self.clicker_sender_cxn:
+                log.warning("No sender connection in button_callback")
+                return
             
             try:
                 o = json.loads(decoded)
@@ -63,34 +85,23 @@ class ControlLoop():
         def midi_callback(client, userdata, msg):
             decoded = msg.payload.decode('utf-8')
             log.debug(f"Midi callback invoked with message: {decoded}")
+
+            if not self.midi_sender_cxn:
+                log.warning("No sender connection in midi_callback")
+                return
             
             try:
                 o = json.loads(decoded)
             except JSONDecodeError as e:
                 log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
                 return
-            self.midi_sender_cxn.send(o)
+            self.midi_sender_cxn.send(o) 
             latency = f"(Latency {datetime.datetime.utcnow() - datetime.datetime.fromisoformat(o['midi_read_time'])})" \
                 if 'midi_read_time' in o \
                 else ''
             log.debug(f"Received MIDI control message: {o} {latency}")
 
        
-        dimensions = (self.display.width, self.display.height)
-        self.forms = (
-            # stripes.Stripes(dimensions),
-            random_shape.RandomSolidShape(dimensions), 
-            random_shape.RandomOutlineShape(dimensions), 
-            random_shape.RandomOutlineCircle(dimensions), 
-            timer.Timer(dimensions),
-            audio_spectrogram.AudioSpectrogram(dimensions),
-            gravity.Gravity(dimensions, 0.006, 32), 
-            keys.Keys(dimensions), 
-            stars.Stars(dimensions), 
-            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
-        )
-        self.form_index = 0
-                
         self.handlers = {
             "Button": {
                 2: lambda state: self.next_form(state)

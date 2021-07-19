@@ -11,9 +11,9 @@ from PIL import Image
 from dataclasses import dataclass
 import colorsys
 from typing import Dict
-from form import Form
+from rgb.form.baseform import BaseForm
 
-class Chase(Form):
+class Chase(BaseForm):
     def __init__(self, height: int):
         self.index = 0
         self.height = height

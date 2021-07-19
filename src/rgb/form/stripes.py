@@ -12,7 +12,7 @@ import colorsys
 import logging
 import os
 import math
-from form import Form
+from rgb.form.baseform import BaseForm
 
 import numpy as np
 import numpy.typing as npt
@@ -66,7 +66,7 @@ class Stripe:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(255 * rgb[0]),np.uint8(255 * rgb[1]),np.uint8(255 * rgb[2]))
 
-class Stripes(Form):
+class Stripes(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         (self.matrix_width, self.matrix_height) = dimensions
         self.stripes = [

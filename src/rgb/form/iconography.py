@@ -15,12 +15,12 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-class Iconography(Form):
+class Iconography(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions

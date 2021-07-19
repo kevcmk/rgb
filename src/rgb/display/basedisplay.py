@@ -1,17 +1,11 @@
 
 
-from rgb.hzel_samplebase import SampleBaseMatrixFactory
 import logging
 from abc import ABC, abstractmethod
 from typing import Tuple, Union
 
 import numpy as np
 from PIL import Image
-from rgbmatrix import FrameCanvas, RGBMatrix
-import sys
-from PIL import ImageTk
-from tkinter import Canvas, Tk, NW
-import atexit 
 import os
 
 log = logging.getLogger(__name__)

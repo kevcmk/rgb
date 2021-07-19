@@ -16,7 +16,7 @@ import constants
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 from rgb.messages import Dial
 from rgb.utilities import constrain
@@ -32,7 +32,7 @@ class Press():
     note: int
     velocity: int
 
-class Keys(Form):
+class Keys(BaseForm):
 
     NUM_NOTES = 12
 

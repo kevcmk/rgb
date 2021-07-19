@@ -16,7 +16,7 @@ import constants
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 from rgb.messages import Dial
 from rgb.utilities import constrain, clamped_add, clamped_subtract
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class AudioSpectrogram(Form):
+class AudioSpectrogram(BaseForm):
 
     NUM_NOTES = 12
     

@@ -14,7 +14,7 @@ from typing import Dict, List, Set, Tuple
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 from rgb.messages import Dial
 from rgb.utilities import constrain
@@ -35,7 +35,7 @@ class Press():
     y2: int
     fill: Tuple[int, int, int]
 
-class Lines(Form):
+class Lines(BaseForm):
 
     NUM_NOTES = 12
 

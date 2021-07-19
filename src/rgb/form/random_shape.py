@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Dict, Tuple, Union
 
 import numpy as np
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 from PIL import Image, ImageDraw
 from rgb.utilities import constrain
 
@@ -39,7 +39,7 @@ class Press():
         return int(((self.t * 1000) % 1000) * 360)
         
 
-class RandomShape(Form):
+class RandomShape(BaseForm):
 
     NUM_NOTES = 12
 

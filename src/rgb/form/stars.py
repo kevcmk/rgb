@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import colorsys
 from typing import Dict
 from PIL import Image
-from form import Form
+from rgb.form.baseform import BaseForm
 
 
 @dataclass
@@ -49,7 +49,7 @@ class Elt:
         #return min(1.0, res * 2)
         
     
-class Stars(Form):
+class Stars(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         (self.matrix_width, self.matrix_height) = dimensions
         self.population = 256

@@ -18,7 +18,7 @@ import numpy.typing as npt
 import constants
 from rgb.messages import Dial
 from rgb.utilities import constrain
-from rgb.form import Form
+from rgb.form.baseform import BaseForm
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -46,7 +46,7 @@ class Elt:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
-class Gravity(Form):
+class Gravity(BaseForm):
 
     # Shape := The bounds of the random.uniform x velocity
     MAX_SHAPE = 0.004 # Random.uniform [-0.004, 0.004] m/s
@@ -57,8 +57,8 @@ class Gravity(Form):
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
         self.population = 484
-        self.adjust_gravitational_constant(constants.MIDI_DIAL_MAX / 2)
-        self.adjust_nozzle(constants.MIDI_DIAL_MAX / 2)
+        self.adjust_gravitational_constant(0.5)
+        self.adjust_nozzle(0.5)
         self.particles: Set[Elt] = set()
         self.jitters = [random.uniform(0.85,1.15) for _ in range(Gravity.JITTERS)]
           
