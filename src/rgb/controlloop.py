@@ -1,5 +1,6 @@
 
 import datetime
+from rgb.form.baseform import BaseForm
 
 import json
 import logging
@@ -21,7 +22,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class ControlLoop():
 
-    def __init__(self, display: BaseDisplay):
+    def __init__(self, display: BaseDisplay, form: Optional[BaseForm]=None):
         self.max_hz = 60
         self.display = display
 
@@ -43,7 +44,7 @@ class ControlLoop():
             keys.Keys(dimensions), 
             stars.Stars(dimensions), 
             orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
-        )
+        ) if not form else (form,)
         self.form_index = 0
                 
 

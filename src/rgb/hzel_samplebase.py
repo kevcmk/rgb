@@ -3,11 +3,7 @@ import time
 import sys
 import os
 
-print("Before: ")
-print("\n".join(sys.path))
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-print("After: ")
-print("\n".join(sys.path))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 # This copied from hzel sample base 

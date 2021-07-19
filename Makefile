@@ -4,6 +4,9 @@ RGBSTRIP_NAME := rgbstrip
 GIT_HASH_TAG := $$(git log -1 --format=%h)
 TRGT := "cyan.local"
 
+runtk:
+	PYTHONPATH="$$(pwd)/src" python src/rgb/maintk.py 
+
 build2d:
 	@docker --debug buildx build \
 		--pull \
