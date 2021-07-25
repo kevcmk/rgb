@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 
-import colorsys
 import datetime
-import json
 import logging
-import math
 import os
-import random
-import time
 from dataclasses import dataclass
 from random import randrange
 from typing import Dict, List, Optional, Set, Tuple
@@ -16,8 +11,6 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 from rgb.form.baseform import BaseForm
-
-from rgb.messages import Button, Dial, Switch
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -75,7 +68,7 @@ class Timer(BaseForm):
                     anchor="mm",
                     font=self.font
                 )
-        return im
+        return im.transpose(Image.FLIP_TOP_BOTTOM)
 
     def step(self, dt: float):
         return self._render()

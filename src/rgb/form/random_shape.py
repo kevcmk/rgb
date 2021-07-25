@@ -18,7 +18,6 @@ from rgb.utilities import constrain
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-
 MIDI_DIAL_MAX = 127
 @dataclass
 class Press():
@@ -129,7 +128,8 @@ class RandomIcon(RandomShape):
         super().__init__(dimensions)
         self.icon_size = 18
         self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", self.icon_size)
-        self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
+        # self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
+        self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
         
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         x = press.position_x
