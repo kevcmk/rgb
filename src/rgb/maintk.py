@@ -1,10 +1,12 @@
 
+from rgb.form.keys import Keys
 from rgb.form.random_shape import RandomIcon
 import os
 from rgb.utilities import loopwait
 from rgb.display.tkcanvas import TkCanvas
 from rgb.controlloop import ControlLoop
 from rgb.form.iconography import Iconography
+from rgb.form.keys import Keys
 from rgb.form.basenoise import *
 import time
 
@@ -34,7 +36,7 @@ if __name__ == "__main__":
     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
     matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
     display = TkCanvas(dimensions=(matrix_width, matrix_height))
-    f = ZNoise((matrix_width, matrix_height))
+    f = Keys((matrix_width, matrix_height))
     i = 0
     t_last = time.time()
     while True:

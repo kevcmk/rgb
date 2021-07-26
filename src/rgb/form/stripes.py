@@ -68,7 +68,7 @@ class Stripe:
 
 class Stripes(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
-        (self.matrix_width, self.matrix_height) = dimensions
+        super().__init__(dimensions)
         self.stripes = [
             Stripe(x=i, hue=random.random(), velocity=random.uniform(-0.01, 0.01)) for i in range(self.matrix_width)
         ]         

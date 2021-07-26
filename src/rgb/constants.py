@@ -1,5 +1,6 @@
 from typing import Mapping
 
+NUM_NOTES = 12
 
 MIDI_DIAL_MAX = 127
 

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import colorsys
-from rgb.utilities import hue_to_pixel
+from rgb.utilities import hsv_to_pixel
 import logging
 import math
 import os
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from PIL import Image
@@ -29,7 +28,7 @@ class BaseNoise(BaseForm):
 
     NOISE_FUNCTIONS = [snoise3, pnoise3]
     def __init__(self, dimensions: Tuple[int, int]):
-        (self.matrix_width, self.matrix_height) = dimensions
+        super().__init__(dimensions)
         self.presses = dict()
 
         self.noise_function_index = 0
@@ -39,8 +38,6 @@ class BaseNoise(BaseForm):
         self.timescale = 0.25
         
         self.t_start = time.time()
-        self.nmax = -100000
-        self.nmin = 10000
         
     def cleanup(self):
         self.presses = dict()
@@ -108,11 +105,11 @@ class WhispNoise(BaseNoise):
 class HueNoise(BaseNoise):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
+        self.scale = 1 / 36.0 # 1/48, [0.1, 10]
+        self.octaves = 4 # 4, [1, 8]
+        self.persistence = 0.0001 # 0.25, [0, 5]
+        self.timescale = 0.25
         
-
     def noise_to_pixel(self, v: float):
-        return hue_to_pixel((v + 1.0) / 2, 1.0, 1.0)
-        
-        
-class ZNoise(WhispNoise):
-    pass
+        return hsv_to_pixel((v + 1.0) / 2, 1.0, 1.0)
+

@@ -9,6 +9,7 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Tuple, Union
+from constants import NUM_NOTES
 
 import numpy as np
 from rgb.form.baseform import BaseForm
@@ -40,10 +41,8 @@ class Press():
 
 class RandomShape(BaseForm):
 
-    NUM_NOTES = 12
-
     def __init__(self, dimensions: Tuple[int, int]):
-        (self.matrix_width, self.matrix_height) = dimensions
+        super().__init__(dimensions)
         self.presses: Dict[str, Press] = dict()
         self.grow = 0
         # The logarithmic base of the grow rate of a shape. High notes grow faster than low notes, a low base means the differences between high and low notes are more apparent.
@@ -70,7 +69,7 @@ class RandomShape(BaseForm):
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
             # 21 , 108
-            hue = (note % RandomShape.NUM_NOTES) / RandomShape.NUM_NOTES
+            hue = (note % NUM_NOTES) / NUM_NOTES
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
             color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
             self.presses[note] = Press(

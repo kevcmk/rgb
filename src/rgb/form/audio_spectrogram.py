@@ -26,8 +26,6 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
 class AudioSpectrogram(BaseForm):
-
-    NUM_NOTES = 12
     
     def state_handler(self, spectrum: List[float]):
         log.warning(f"Max State: {max(spectrum)}")

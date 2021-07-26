@@ -51,7 +51,7 @@ class Elt:
     
 class Stars(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
-        (self.matrix_width, self.matrix_height) = dimensions
+        super().__init__(dimensions)
         self.population = 256
         self.elts: Set[Elt] = {Elt() for _ in range(self.population)}
         self.handlers = {}
