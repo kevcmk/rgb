@@ -13,7 +13,7 @@ from typing import Dict, Tuple, Union
 import numpy as np
 from rgb.form.baseform import BaseForm
 from PIL import Image, ImageDraw, ImageFont
-from rgb.utilities import constrain
+from rgb.utilities import clamp
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

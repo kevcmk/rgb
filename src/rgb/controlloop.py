@@ -174,7 +174,7 @@ class ControlLoop():
             # TODO After?
             t_last, total_elapsed_since_last_frame = loopwait(t_last, self.max_dt)    
             
-            image = self.form.step(total_elapsed_since_last_frame)
+            image = self.form._instrumented_step(total_elapsed_since_last_frame)
             self.display.display(image)
             
             if self.midi_receiver_cxn:

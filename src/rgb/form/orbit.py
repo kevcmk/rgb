@@ -18,7 +18,7 @@ import numpy.typing as npt
 
 from rgb.form.baseform import BaseForm
 from rgb.messages import Dial
-from rgb.utilities import constrain
+from rgb.utilities import clamp
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -101,7 +101,7 @@ class Orbit(BaseForm):
         State 0.0 := 1 second per second 
         State 1.0 := 1 year per second
         """
-        constrained = constrain(state, 0.0, 1.0) 
+        constrained = clamp(state, 0.0, 1.0) 
         # In [12]: math.log(60 * 60 * 24 * 365)
         # Out[12]: 17.26664030837464
         self.fast_forward_scale = math.exp(constrained * 17.26664)

@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 import constants
 from rgb.messages import Dial
-from rgb.utilities import constrain
+from rgb.utilities import clamp
 from rgb.form.baseform import BaseForm
 
 log = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class Gravity(BaseForm):
         State 0.0 := g = 0.05 m/s^2
         State 1.0 := g = 12 m/s^2
         """
-        constrained = constrain(state, 0.0, 1.0)
+        constrained = clamp(state, 0.0, 1.0)
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         
@@ -108,7 +108,7 @@ class Gravity(BaseForm):
         State 0.0 := g = 0.05 m/s^2
         State 1.0 := g = 12 m/s^2
         """
-        constrained = constrain(state, 0.0, 1.0)
+        constrained = clamp(state, 0.0, 1.0)
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         

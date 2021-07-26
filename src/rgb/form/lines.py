@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw
 from rgb.form.baseform import BaseForm
 
 from rgb.messages import Dial
-from rgb.utilities import constrain
+from rgb.utilities import clamp
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
