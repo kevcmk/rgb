@@ -33,10 +33,10 @@ class BaseNoise(BaseForm):
         self.presses = dict()
 
         self.noise_function_index = 0
-        self.scale = 1 / 24.0 # 1/48, [0.1, 10]
+        self.scale = 1 / 36.0 # 1/48, [0.1, 10]
         self.octaves = 4 # 4, [1, 8]
-        self.persistence = 0.0125 # 0.25, [0, 5]
-        self.timescale = 0.5
+        self.persistence = 0.0001 # 0.25, [0, 5]
+        self.timescale = 0.25
         
         self.t_start = time.time()
         self.nmax = -100000
@@ -81,7 +81,9 @@ class BaseNoise(BaseForm):
         return self.NOISE_FUNCTIONS[self.noise_function_index](y * self.scale, x * self.scale, z * self.timescale, octaves=self.octaves, persistence=self.persistence)
 
     def noise_to_pixel(self, v: float):
-        return (np.uint8(v * 255),np.uint8(v * 255),np.uint8(v * 255))
+        normed = (v + 1.0) / 2
+        pix_value = normed * 255
+        return (np.uint8(pix_value),np.uint8(pix_value),np.uint8(pix_value))
     
     def step(self, dt) -> Image.Image:
         res = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
@@ -94,10 +96,23 @@ class BaseNoise(BaseForm):
         return Image.fromarray(res) #.transpose(Image.FLIP_TOP_BOTTOM)
 
 
-class ZNoise(BaseNoise):
-    pass
+
+class WhispNoise(BaseNoise): 
+    def noise_to_pixel(self, v: float):
+        normed = (v + 1.0) / 2
+        exponented = normed ** 8
+        pix_value = exponented * 255.0
+        return (np.uint8(pix_value),np.uint8(pix_value),np.uint8(pix_value))
+        
 
 class HueNoise(BaseNoise):
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        
 
     def noise_to_pixel(self, v: float):
         return hue_to_pixel((v + 1.0) / 2, 1.0, 1.0)
+        
+        
+class ZNoise(WhispNoise):
+    pass

@@ -120,6 +120,10 @@ class RandomOutlineCircle(RandomShape):
 
 class RandomOutlineShape(RandomShape):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
+        draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=None, outline=press.color)
+        
+class RandomSolidShape(RandomShape):
+    def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=press.color, outline=None)
         
 class RandomIcon(RandomShape):
@@ -128,8 +132,8 @@ class RandomIcon(RandomShape):
         super().__init__(dimensions)
         self.icon_size = 18
         self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", self.icon_size)
-        # self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
-        self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
+        self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
+        #self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
         
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         x = press.position_x

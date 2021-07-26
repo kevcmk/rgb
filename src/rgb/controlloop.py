@@ -12,7 +12,7 @@ from json.decoder import JSONDecodeError
 from typing import Optional
 
 import imaqt
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer)
+from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer, basenoise)
 from rgb.display.basedisplay import BaseDisplay
 from rgb.messages import Button, Dial, Spectrum, Switch
 from rgb.utilities import loopwait
@@ -36,15 +36,19 @@ class ControlLoop():
         
         self.forms = (
             # stripes.Stripes(dimensions),
-            random_shape.RandomSolidShape(dimensions), 
-            random_shape.RandomOutlineShape(dimensions), 
-            random_shape.RandomOutlineCircle(dimensions), 
-            timer.Timer(dimensions),
-            audio_spectrogram.AudioSpectrogram(dimensions),
-            gravity.Gravity(dimensions, 0.006, 32), 
             keys.Keys(dimensions), 
-            stars.Stars(dimensions), 
-            orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
+            random_shape.RandomIcon(dimensions),
+            random_shape.RandomSolidShape(dimensions), 
+            # random_shape.RandomOutlineShape(dimensions), 
+            random_shape.RandomOutlineCircle(dimensions), 
+            basenoise.WhispNoise(dimensions),
+            basenoise.HueNoise(dimensions),
+            basenoise.BaseNoise(dimensions),
+            timer.Timer(dimensions),
+            # audio_spectrogram.AudioSpectrogram(dimensions),
+            gravity.Gravity(dimensions, 0.006, 32), 
+            # stars.Stars(dimensions), 
+            # orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
         ) if not form else (form,)
         self.form_index = 0
                 
