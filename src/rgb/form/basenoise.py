@@ -94,8 +94,12 @@ class NoiseKey(BaseNoise, KeyAwareForm):
             lo = xs[note_index]
             hi = xs[note_index + 1] 
             for i in range(self.matrix_height):
-                for j in range(lo, hi):
-                    noise_value = self.select_noise(x=j, y=i, z=time_elapsed)
+                for j in range(self.matrix_width):
+                    noise_value = self.NOISE_FUNCTIONS[self.noise_function_index](
+                        i * self.scale, j * self.scale, 
+                        time_elapsed * self.timescale, 
+                        octaves=self.octaves, 
+                        persistence=note_index / 12)
                     pixel = self.noise_to_pixel(noise_value) 
                     notespace[index, i, j, 0] = pixel[0]
                     notespace[index, i, j, 1] = pixel[1]

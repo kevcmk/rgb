@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import colorsys
+from rgb.utilities import get_font
 import logging
 import math
 import os
@@ -130,7 +131,7 @@ class RandomIcon(RandomShape):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.icon_size = 18
-        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", self.icon_size)
+        self.font = get_font("DejaVuSans.ttf", self.icon_size)
         self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
         #self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
         

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import datetime
+from rgb.utilities import get_font
 import logging
 import os
 from dataclasses import dataclass
@@ -20,7 +21,7 @@ class Timer(BaseForm):
         self.max_hz = 60
         (self.matrix_width, self.matrix_height) = dimensions
         self.t_stop: Optional[datetime.datetime] = None
-        self.font = ImageFont.truetype("src/rgb/fonts/DejaVuSans.ttf", 14)
+        self.font = get_font("DejaVuSans.ttf", 14)
         self.enable_visual = True
 
         self.handlers = {

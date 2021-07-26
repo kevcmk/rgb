@@ -1,5 +1,6 @@
 
 import datetime
+from rgb.utilities import pad
 from rgb.form.baseform import BaseForm
 
 import json
@@ -9,7 +10,7 @@ from multiprocessing import connection
 import os
 import time
 from json.decoder import JSONDecodeError
-from typing import Optional
+from typing import Dict, Optional
 
 import imaqt
 from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer, basenoise)
@@ -148,15 +149,15 @@ class ControlLoop():
             self.form.cleanup()
             self.form_index = (self.form_index - 1) % len(self.forms)
     
-    #def midi_handler(self, value: Dict):
+    def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
-        # # if pad(0, value):
-        # #     # pad 0
-        # #     self.previous_form(True)
-        # # elif pad(1, value):
-        # #     # pad 1
-        # #     self.next_form(True)
+        if pad(0, value):
+            # pad 0
+            self.previous_form(True)
+        elif pad(1, value):
+            # pad 1
+            self.next_form(True)
         # elif button_mod(value):
         #     self.first_form()
         # elif button_sus(value):
@@ -187,7 +188,7 @@ class ControlLoop():
                     log.info(f"midi_receiver_cxn received: {value}")
                     # If form midi handler goes first, then a pad strike that is also a valid key press does not induce that form's key's effect.
                     self.form.midi_handler(value)
-                    #self.midi_handler(value)
+                    self.midi_handler(value)
 
             if self.clicker_receiver_cxn:    
                 while self.clicker_receiver_cxn.poll(0):

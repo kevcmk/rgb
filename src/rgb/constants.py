@@ -5,8 +5,6 @@ NUM_NOTES = 12
 MIDI_DIAL_MAX = 127
 
 PAD_INDICES = [36, 38, 42, 46]
-def pad(index: int, m: Mapping) -> bool:
-    return m['type'] == 'note_on' and m['note'] == PAD_INDICES[index]
     
 # def button_pitchdown(m: Mapping) -> bool:
 #     # -128 -> -2816 -> 0

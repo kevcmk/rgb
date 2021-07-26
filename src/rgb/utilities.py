@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from rgb.constants import PAD_INDICES
 import logging
 import time
-from typing import Tuple
+from typing import Dict, Tuple
+from PIL import ImageFont
 import numpy as np
 import colorsys
 
@@ -36,3 +38,20 @@ def loopwait(t_last: float, max_dt: float):
     else:
         time.sleep(wait_time)
     return now, total_elapsed_since_last_frame
+
+def get_font(font, font_size: int):
+    font_paths = ["src/rgb/fonts/", "rgb/fonts/"]
+    for base in font_paths:
+        path = f"{base}{font}"
+        try:
+            return ImageFont.truetype(path, font_size)
+        except OSError:
+            log.debug(f"Could not open {path}, skipping...")
+    import os
+    print(os.getcwd())
+    print(os.listdir(os.getcwd()))
+    raise ValueError(f"Could not find font {font} in {font_paths}")
+
+
+def pad(index: int, m: Dict) -> bool:
+    return m['type'] == 'note_on' and m['note'] == PAD_INDICES[index]
