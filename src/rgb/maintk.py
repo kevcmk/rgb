@@ -36,7 +36,7 @@ if __name__ == "__main__":
     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
     matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
     display = TkCanvas(dimensions=(matrix_width, matrix_height))
-    f = NoiseKey((matrix_width, matrix_height))
+    f = WhispNoise((matrix_width, matrix_height))
     i = 0
     t_last = time.time()
     while True:

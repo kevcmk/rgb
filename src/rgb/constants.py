@@ -4,6 +4,7 @@ NUM_NOTES = 12
 
 MIDI_DIAL_MAX = 127
 
+DIAL_INDICES = [14, 15, 16, 17]
 PAD_INDICES = [36, 38, 42, 46]
     
 # def button_pitchdown(m: Mapping) -> bool:

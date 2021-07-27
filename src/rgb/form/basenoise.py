@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+from rgb.utilities import dial
 import logging
 import os
 import time
@@ -10,9 +11,9 @@ from typing import Dict, Tuple, Union
 import numpy as np
 from noise import pnoise3, snoise3
 from PIL import Image
-from rgb.constants import NUM_NOTES
+from rgb.constants import NUM_NOTES, MIDI_DIAL_MAX
 from rgb.form.baseform import BaseForm
-from rgb.utilities import hsv_to_pixel
+from rgb.utilities import hsv_to_pixel, dial
 
 from form.keys import KeyAwareForm
 
@@ -29,7 +30,7 @@ class Press():
 
 class BaseNoise(BaseForm):
 
-    NOISE_FUNCTIONS = [snoise3, pnoise3]
+    NOISE_FUNCTIONS = [pnoise3, snoise3]
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.presses = dict()
@@ -41,6 +42,20 @@ class BaseNoise(BaseForm):
         self.timescale = 0.25
         
         self.t_start = time.time()
+    
+    def midi_handler(self, value: Dict):
+        if dial(0, value):
+            self.scale = (value['value'] / MIDI_DIAL_MAX) ** 3 # [0, 1.0] 🏒🏒 
+            log.info(f"Scale set to {self.scale}")
+        elif dial(1, value):
+            self.octaves = int(value['value'] / MIDI_DIAL_MAX * 8) + 1  # [1, 9]
+            log.info(f"Octaves set to {self.octaves}")
+        elif dial(2, value):
+            self.persistence = (value['value'] / MIDI_DIAL_MAX) ** 2 # [0, 1.0] 🏒 
+            log.info(f"Persistence set to {self.persistence}")
+        elif dial(3, value):
+            self.timescale = value['value'] / MIDI_DIAL_MAX # [0, 1.0] linear
+            log.info(f"Timescale set to {self.timescale}")
         
     def select_noise(self, x, y, z) -> float:
         return self.NOISE_FUNCTIONS[self.noise_function_index](y * self.scale, x * self.scale, z * self.timescale, octaves=self.octaves, persistence=self.persistence)
@@ -53,9 +68,11 @@ class BaseNoise(BaseForm):
     def step(self, dt) -> Image.Image:
         res = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         dt = time.time() - self.t_start
+        half_width = self.matrix_width // 2
+        half_height = self.matrix_height // 2
         for i in range(self.matrix_height):
             for j in range(self.matrix_width):
-                v = self.select_noise(x=j, y=i, z=dt)
+                v = self.select_noise(x=j - half_width, y=i - half_height, z=dt)
                 res[i,j,:] = self.noise_to_pixel(v)
         
         return Image.fromarray(res) #.transpose(Image.FLIP_TOP_BOTTOM)
@@ -66,7 +83,7 @@ class WhispNoise(BaseNoise):
     def noise_to_pixel(self, v: float):
         normed = (v + 1.0) / 2
         exponented = normed ** 8
-        pix_value = exponented * 255.0
+        pix_value = max(1.0, exponented * 255.0)
         return (np.uint8(pix_value),np.uint8(pix_value),np.uint8(pix_value))
         
 

@@ -152,12 +152,12 @@ class ControlLoop():
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
-        if pad(0, value):
-            # pad 0
-            self.previous_form(True)
-        elif pad(1, value):
-            # pad 1
-            self.next_form(True)
+        # if pad(0, value):
+        #     # pad 0
+        #     self.previous_form(True)
+        # elif pad(1, value):
+        #     # pad 1
+        #     self.next_form(True)
         # elif button_mod(value):
         #     self.first_form()
         # elif button_sus(value):
@@ -166,6 +166,7 @@ class ControlLoop():
         # elif value['type'] == 'control_change' and value['control'] == 17: # MIDI #3
         #     self.max_hz = value['value'] * 3 # [0,381]
         #     log.info(f"Set max_hz to {self.max_hz}")
+        pass
 
     def blocking_loop(self):
 

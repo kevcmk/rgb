@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from rgb.constants import PAD_INDICES
+from rgb.constants import PAD_INDICES, DIAL_INDICES
 import logging
 import time
 from typing import Dict, Tuple
@@ -54,4 +54,7 @@ def get_font(font, font_size: int):
 
 
 def pad(index: int, m: Dict) -> bool:
-    return m['type'] == 'note_on' and m['note'] == PAD_INDICES[index]
+    return m['type'] == 'note_on' and m.get('note', None) == PAD_INDICES[index]
+
+def dial(index: int, m: Dict) -> bool:
+    return m['type'] == 'control_change' and m.get('control', None) == DIAL_INDICES[index]

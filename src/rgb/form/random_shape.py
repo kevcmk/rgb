@@ -33,7 +33,7 @@ class Press():
 
     @property
     def num_sides(self):
-        return int(((self.t * 100) % 8))
+        return int(((self.t * 100) % 5) + 3)
     
     @property
     def rotation(self):
