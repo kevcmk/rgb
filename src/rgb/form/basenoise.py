@@ -60,8 +60,12 @@ class BaseNoise(BaseForm):
     def select_noise(self, x, y, z) -> float:
         return self.NOISE_FUNCTIONS[self.noise_function_index](y * self.scale, x * self.scale, z * self.timescale, octaves=self.octaves, persistence=self.persistence)
 
+    @staticmethod
+    def normalize_noise(noise: float) -> float:
+        return (noise + 1.0) / 2
+
     def noise_to_pixel(self, v: float):
-        normed = (v + 1.0) / 2
+        normed = BaseNoise.normalize_noise(v)
         pix_value = normed * 255
         return (np.uint8(pix_value),np.uint8(pix_value),np.uint8(pix_value))
     

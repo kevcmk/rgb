@@ -25,7 +25,7 @@ from rgb.utilities import clamp
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-@dataclass
+@dataclass(frozen=True)
 class Press():
     t: float
     note: int
@@ -34,7 +34,7 @@ class Press():
 class KeyAwareForm(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.presses = dict()
+        self.presses: Dict[str, Press] = dict()
 
     def cleanup(self):
         self.presses = dict()
