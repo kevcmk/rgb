@@ -58,3 +58,27 @@ def pad(index: int, m: Dict) -> bool:
 
 def dial(index: int, m: Dict) -> bool:
     return m['type'] == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
+
+def sustain_on(m: Dict) -> bool:
+    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127
+
+def sustain_off(m: Dict) -> bool:
+    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0
+
+
+"""
+# Press
+2021-07-28T11:05:54-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 127, "channel": 0, "midi_read_time": "2021-07-28 18:05:55.155991"} <------------ Press
+2021-07-28T11:05:54-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 1, "midi_read_time": "2021-07-28 18:05:55.157802"}
+2021-07-28T11:05:54-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 127, "channel": 2, "midi_read_time": "2021-07-28 18:05:55.159192"}
+2021-07-28T11:05:54-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 0, 127], "midi_read_time": "2021-07-28 18:05:55.161117"}
+2021-07-28T11:05:54-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 1, 127], "midi_read_time": "2021-07-28 18:05:55.162283"}
+2021-07-28T11:05:54-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 2, 127], "midi_read_time": "2021-07-28 18:05:55.163747"}
+# Release
+2021-07-28T11:05:57-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0, "midi_read_time": "2021-07-28 18:05:58.269462"} <------------ Release
+2021-07-28T11:05:57-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 1, "midi_read_time": "2021-07-28 18:05:58.272720"}
+2021-07-28T11:05:57-0700 vmini {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 2, "midi_read_time": "2021-07-28 18:05:58.274453"}
+2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 0, 0], "midi_read_time": "2021-07-28 18:05:58.276304"}
+2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 1, 0], "midi_read_time": "2021-07-28 18:05:58.279284"}
+2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 2, 0], "midi_read_time": "2021-07-28 18:05:58.280181"}
+"""

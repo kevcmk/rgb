@@ -25,7 +25,8 @@ class Cells(KeyAwareForm, BaseNoise):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.cell_width = 8
-        self.timescale = 0.25
+        self.scale = 0.5
+        self.timescale = 0.75
         self.octaves = 4
         self.persistence = 0.5
         self.z = 0
@@ -58,13 +59,14 @@ class Cells(KeyAwareForm, BaseNoise):
         else:
             boost = 0
         # When a key is pressed, the https://easings.net/#easeOutQuint
-        self.z += dt * (self.timescale * (1 + boost))
+        self.z += dt * self.timescale
         intensities = np.zeros((self.practical_height, self.practical_width), dtype=float)
         res = np.zeros((self.practical_height, self.practical_width, 3), dtype=np.uint8)
         for i in range(self.practical_height):
             for j in range(self.practical_width):
-                practical_center = (i * self.cell_width + self.cell_width // 2, j * self.cell_width + self.cell_width // 2)
-                noise = self.select_noise(*practical_center, self.z)
+                # practical_center = (i * self.cell_width + self.cell_width // 2, j * self.cell_width + self.cell_width // 2)
+                # noise = self.select_noise(*practical_center, self.z)
+                noise = self.select_noise(i, j, self.z)
                 normalized_noise = self.normalize_noise(noise)
                 intensities[i,j] = normalized_noise
                 res[i,j,:] = hsv_to_pixel(0, 0, normalized_noise)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from rgb.constants import NUM_NOTES
+from rgb.form.keyawareform import Press, SustainAwareForm
 import random
 import json
 from typing import Dict, List, Set, Tuple
@@ -25,12 +27,12 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 @dataclass
 class Elt:
-    def __init__(self, x, y, vx, vy):
+    def __init__(self, x:float, y:float, vx:float, vy:float, hue:float):
         self.x: float = x
         self.y: float = y
         self.vx: float = vx
         self.vy: float = vy
-        self.hue: float = random.random()
+        self.hue: float = hue
         
     def __str__(self):
         return json.dumps({key: getattr(self, key) for key in ["x","y","vx","vy"]})
@@ -46,13 +48,16 @@ class Elt:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
-class Gravity(BaseForm):
+class Gravity(SustainAwareForm):
 
     # Shape := The bounds of the random.uniform x velocity
     MAX_SHAPE = 0.004 # Random.uniform [-0.004, 0.004] m/s
+    
+    # Add randomness to prevent grouping along horizontals
     JITTERS = 32
 
-    def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float, population: int):
+    def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float):
+        super().__init__(dimensions)
         (self.matrix_width, self.matrix_height) = dimensions
         self.world_width = self.matrix_width * meters_per_pixel
         self.world_height = self.matrix_height * meters_per_pixel
@@ -70,6 +75,7 @@ class Gravity(BaseForm):
         }
     
     def midi_handler(self, value: Dict):
+        super().midi_handler(value)
         # TODO
         if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[2]:
             self.population = max(self.population - 16, 0)
@@ -130,26 +136,10 @@ class Gravity(BaseForm):
                     x=self.world_width / 2,
                     y=self.world_height, 
                     vx=random.uniform(-self.shape, self.shape),
-                    vy=0
+                    vy=0,
+                    hue=random.random()
                 )
             )
-
-    def _render(self) -> Image.Image:
-        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
-        for elt in self.particles:
-            
-            render_y = round(self.matrix_scale * elt.y)
-            render_x = round(self.matrix_scale * elt.x)
-            
-            if 0 <= render_y < self.matrix_height and \
-                0 <= render_x < self.matrix_width:
-                rgb = elt.rgb
-                img[render_y,render_x,0] = rgb[0]
-                img[render_y,render_x,1] = rgb[1]
-                img[render_y,render_x,2] = rgb[2]
-            # Else, skip it
-        # Return the vertical flip, origin at the top.
-        return Image.fromarray(img).transpose(Image.FLIP_TOP_BOTTOM)
 
     def step(self, dt: float):
         self._birth_particles()
@@ -177,4 +167,64 @@ class Gravity(BaseForm):
         return self._render()
 
 
+    def _render(self) -> Image.Image:
+        img = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
+        for elt in self.particles:
+            
+            render_y = round(self.matrix_scale * elt.y)
+            render_x = round(self.matrix_scale * elt.x)
+            
+            if 0 <= render_y < self.matrix_height and \
+                0 <= render_x < self.matrix_width:
+                rgb = elt.rgb
+                img[render_y,render_x,0] = rgb[0]
+                img[render_y,render_x,1] = rgb[1]
+                img[render_y,render_x,2] = rgb[2]
+            # Else, skip it
+        # Return the vertical flip, origin at the top.
+        return Image.fromarray(img).transpose(Image.FLIP_TOP_BOTTOM)
 
+
+class GravityKeys(Gravity):
+    def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float):
+        super().__init__(dimensions, meters_per_pixel)
+    
+    def particle_from_keypress(self, key: Press) -> Elt:
+        key_unit = key.note / NUM_NOTES
+        
+        return Elt(
+                    x=self.world_width / 2,
+                    y=self.world_height, 
+                    vx=random.uniform(-self.shape, self.shape),
+                    vy=0,
+                    hue=key_unit
+                )
+    
+    def _birth_particles(self):
+        room = self.population - len(self.particles)
+        if room <= 0:
+            return
+        births = random.randint(0, room) // 10
+        for key in self.presses.values():
+            for _ in range(int(births)):
+                self.particles.add(self.particle_from_keypress(key))
+
+    
+        
+class GravityKeysMultiNozzle(GravityKeys):
+
+    def __init__(self, dimensions: Tuple[int, int], meters_per_pixel: float):
+        super().__init__(dimensions, meters_per_pixel)
+    
+    def particle_from_keypress(self, key: Press) -> Elt:
+        key_unit = key.note / NUM_NOTES
+        launch_point = key_unit * self.world_width
+        return Elt(
+                    x=launch_point,
+                    y=self.world_height, 
+                    vx=random.uniform(-self.shape, self.shape),
+                    vy=0,
+                    hue=key_unit
+                )
+
+    

@@ -37,6 +37,10 @@ class ControlLoop():
         
         self.forms = (
             # stripes.Stripes(dimensions),
+
+            gravity.Gravity(dimensions, 0.006), 
+            gravity.GravityKeys(dimensions, 0.006), 
+            gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
             keys.Keys(dimensions), 
             random_shape.RandomIcon(dimensions),
             random_shape.RandomSolidShape(dimensions), 
@@ -47,7 +51,6 @@ class ControlLoop():
             basenoise.BaseNoise(dimensions),
             timer.Timer(dimensions),
             # audio_spectrogram.AudioSpectrogram(dimensions),
-            gravity.Gravity(dimensions, 0.006, 32), 
             # stars.Stars(dimensions), 
             # orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
         ) if not form else (form,)

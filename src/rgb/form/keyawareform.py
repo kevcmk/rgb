@@ -1,26 +1,17 @@
 #!/usr/bin/env python
 
-from abc import abstractproperty
-import colorsys
-import json
+
+from rgb.utilities import sustain_off, sustain_on
 import logging
-import math
 import os
-import random
 import time
 from dataclasses import dataclass
 from random import randrange
-from typing import Dict, List, Set, Tuple
-import datetime
+from typing import Dict, Tuple
 from constants import NUM_NOTES, MIDI_DIAL_MAX
 
-import numpy as np
-import numpy.typing as npt
-from PIL import Image
 from rgb.form.baseform import BaseForm
 
-from rgb.messages import Dial
-from rgb.utilities import clamp
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -30,6 +21,10 @@ class Press():
     t: float
     note: int
     velocity: int
+
+    @property
+    def index(self):
+        return self.note % NUM_NOTES
 
 class KeyAwareForm(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
@@ -51,3 +46,21 @@ class KeyAwareForm(BaseForm):
             note = value['note']
             if note in self.presses:
                 del self.presses[note]
+
+class SustainAwareForm(KeyAwareForm):
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        print("Sustainaware")
+        self.sustain = False
+
+    def cleanup(self):
+        self.presses = dict()
+    
+    def midi_handler(self, value: Dict):
+        # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
+        super().midi_handler(value)
+        if sustain_on(value):
+            self.sustain = True
+        elif sustain_off(value):
+            self.sustain = False
+            
