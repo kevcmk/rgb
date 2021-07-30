@@ -12,7 +12,7 @@ import time
 from json.decoder import JSONDecodeError
 from typing import Dict, Optional
 
-import imaqt
+import rgb.imaqt
 from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer, basenoise)
 from rgb.display.basedisplay import BaseDisplay
 from rgb.messages import Button, Dial, Spectrum, Switch

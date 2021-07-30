@@ -15,7 +15,7 @@ from rgb.constants import NUM_NOTES, MIDI_DIAL_MAX
 from rgb.form.baseform import BaseForm
 from rgb.utilities import hsv_to_pixel, dial
 
-from form.keys import KeyAwareForm
+from rgb.form.keys import KeyAwareForm
 
 log = logging.getLogger(__name__)
 log.setLevel(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

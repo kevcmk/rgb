@@ -11,7 +11,7 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Tuple, Union
-from constants import NUM_NOTES
+from rgb.constants import NUM_NOTES
 
 import numpy as np
 from rgb.form.baseform import BaseForm

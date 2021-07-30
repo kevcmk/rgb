@@ -17,7 +17,7 @@ import os
 import numpy as np
 import numpy.typing as npt
 
-import constants
+import rgb.constants
 from rgb.messages import Dial
 from rgb.utilities import clamp
 from rgb.form.baseform import BaseForm

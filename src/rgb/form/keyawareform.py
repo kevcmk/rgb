@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from random import randrange
 from typing import Dict, Optional, Set, Tuple
-from constants import NUM_NOTES, MIDI_DIAL_MAX
+from rgb.constants import NUM_NOTES, MIDI_DIAL_MAX
 
 from rgb.form.baseform import BaseForm
 

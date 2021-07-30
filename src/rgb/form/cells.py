@@ -10,7 +10,7 @@ from typing import Dict, List, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from constants import MIDI_DIAL_MAX, NUM_NOTES
+from rgb.constants import MIDI_DIAL_MAX, NUM_NOTES
 from PIL import Image
 from rgb.form.baseform import BaseForm
 from rgb.form.keyawareform import KeyAwareForm, Press

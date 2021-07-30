@@ -13,8 +13,8 @@ import numpy.typing as npt
 from PIL import Image
 from rpi_ws281x import Color
 
-import constants
-import imaqt
+import rgb.constants
+import rgb.imaqt
 from displays.rgbstrip import RGBStrip
 from forms.chase import Chase
 from forms.keys import Keys

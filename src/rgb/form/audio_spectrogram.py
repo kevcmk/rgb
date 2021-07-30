@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import colorsys
-from constants import MIDI_DIAL_MAX
+from rgb.constants import MIDI_DIAL_MAX
 import json
 import logging
 import math
@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from random import randrange
 from typing import Dict, List, Set, Tuple
 import datetime
-import constants
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
