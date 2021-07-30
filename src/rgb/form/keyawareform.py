@@ -40,7 +40,6 @@ class KeyAwareForm(BaseForm):
     
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
-        midi_read_time = datetime.datetime.fromisoformat(value['midi_read_time'])
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX

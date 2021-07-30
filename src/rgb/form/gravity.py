@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from rgb.constants import NUM_NOTES
 from rgb.form.keyawareform import Press, KeyAwareForm
 import random
 import json
@@ -17,7 +16,7 @@ import os
 import numpy as np
 import numpy.typing as npt
 
-import rgb.constants
+from rgb.constants import PAD_INDICES, MIDI_DIAL_MAX, NUM_NOTES
 from rgb.messages import Dial
 from rgb.utilities import clamp
 from rgb.form.baseform import BaseForm
@@ -77,14 +76,14 @@ class Gravity(KeyAwareForm):
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
         # TODO
-        if value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[2]:
+        if value['type'] == 'note_on' and value['note'] == PAD_INDICES[2]:
             self.population = max(self.population - 16, 0)
-        elif value['type'] == 'note_on' and value['note'] == constants.PAD_INDICES[3]:
+        elif value['type'] == 'note_on' and value['note'] == PAD_INDICES[3]:
             self.population = min(self.population + 16, 512)
         elif value['type'] == 'control_change' and value['control'] == 14: 
-            self.adjust_gravitational_constant(value['value'] / constants.MIDI_DIAL_MAX)
+            self.adjust_gravitational_constant(value['value'] / MIDI_DIAL_MAX)
         elif value['type'] == 'control_change' and value['control'] == 15:
-            self.adjust_nozzle(value['value'] / constants.MIDI_DIAL_MAX)
+            self.adjust_nozzle(value['value'] / MIDI_DIAL_MAX)
     
     def button_0_handler(self, state: bool):
         if state:
