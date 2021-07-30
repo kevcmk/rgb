@@ -132,11 +132,18 @@ class RandomText(RandomShape):
     def select_string(self, press: Press) -> str:
         raise NotImplementedError
 
+    def font_cache(self, size: int): 
+        if size in self._fonts:
+            return self._fonts[size]
+        else:
+            log.info(f"Adding {size} to font_cache, size {len(self._fonts)}")
+            self._fonts[size] = get_font(self.font_name, int(size))
+        
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.icon_size = 18
-        self.font = get_font("DejaVuSans.ttf", self.icon_size)
-        
+        self.font_name = "DejaVuSans.ttf"
+        self._fonts: Dict[int, ImageFont.FreeTypeFont] = dict()
+
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         x = press.position_x
         y = press.position_y
@@ -145,7 +152,7 @@ class RandomText(RandomShape):
             text=elt, 
             fill=(255, 0, 0), 
             anchor="mm",
-            font=self.font
+            font=self.font_cache(r)
         )
 
 class RandomWord(RandomText):
