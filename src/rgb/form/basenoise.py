@@ -21,13 +21,6 @@ log = logging.getLogger(__name__)
 log.setLevel(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-MIDI_DIAL_MAX = 127
-@dataclass
-class Press():
-    t: float
-    note: int
-    velocity: int
-
 class BaseNoise(BaseForm):
 
     NOISE_FUNCTIONS = [pnoise3, snoise3]

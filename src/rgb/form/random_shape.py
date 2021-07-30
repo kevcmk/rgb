@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import colorsys
+from rgb.utilities import get_dictionary
 from rgb.utilities import get_font
 import logging
 import math
@@ -21,7 +22,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 MIDI_DIAL_MAX = 127
-@dataclass
+@dataclass(frozen=True)
 class Press():
     t: float
     note: int
@@ -126,24 +127,50 @@ class RandomSolidShape(RandomShape):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=press.color, outline=None)
         
-class RandomIcon(RandomShape):
+class RandomText(RandomShape):
+    # TODO Make abstract?
+    def select_string(self, press: Press) -> str:
+        raise NotImplementedError
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.icon_size = 18
         self.font = get_font("DejaVuSans.ttf", self.icon_size)
-        self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
-        #self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
         
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         x = press.position_x
         y = press.position_y
-        elt_index = int((press.t % 1) * len(self.palette))
-        elt = self.palette[elt_index]
+        elt = self.select_string(press)
         draw_context.text((x,y), 
             text=elt, 
             fill=(255, 0, 0), 
             anchor="mm",
             font=self.font
         )
-        
+
+class RandomWord(RandomText):
+    DICTIONARY = get_dictionary("english5000.txt")  
+    def select_string(self, press: Press) -> str:
+        return RandomWord.DICTIONARY[hash(press) % len(self.DICTIONARY)]
+
+class RandomJapaneseWord(RandomText):
+    DICTIONARY = get_dictionary("japanese6000.txt")    
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        #self.font = get_font("sazanami-mincho.ttf", self.icon_size)
+        #self.font = get_font("sazanami-gothic.ttf", self.icon_size)
+        self.font = get_font("HanaMinA.ttf", self.icon_size)
+
+    def select_string(self, press: Press) -> str:
+        return RandomJapaneseWord.DICTIONARY[hash(press) % len(self.DICTIONARY)]
+
+class RandomIcon(RandomText):
+    SYMBOLS = [c for c in "★✶✢❤︎✕⨳♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"]
+    def select_string(self, press: Press) -> str:
+        return RandomIcon.SYMBOLS[hash(press) % len(self.SYMBOLS)]
+    
+    
+class RandomNumber(RandomText):
+    def select_string(self, press: Press) -> str:
+        return str(hash(press) % 100)
+

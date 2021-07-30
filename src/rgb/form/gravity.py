@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from rgb.constants import NUM_NOTES
-from rgb.form.keyawareform import Press, SustainAwareForm
+from rgb.form.keyawareform import Press, KeyAwareForm
 import random
 import json
 from typing import Dict, List, Set, Tuple
@@ -48,7 +48,7 @@ class Elt:
         rgb = colorsys.hsv_to_rgb(self.hue, 1.0, 1.0)
         return (np.uint8(rgb[0] * 255),np.uint8(rgb[1] * 255),np.uint8(rgb[2] * 255))
     
-class Gravity(SustainAwareForm):
+class Gravity(KeyAwareForm):
 
     # Shape := The bounds of the random.uniform x velocity
     MAX_SHAPE = 0.004 # Random.uniform [-0.004, 0.004] m/s
@@ -191,7 +191,6 @@ class GravityKeys(Gravity):
     
     def particle_from_keypress(self, key: Press) -> Elt:
         key_unit = key.note / NUM_NOTES
-        
         return Elt(
                     x=self.world_width / 2,
                     y=self.world_height, 
@@ -217,7 +216,7 @@ class GravityKeysMultiNozzle(GravityKeys):
         super().__init__(dimensions, meters_per_pixel)
     
     def particle_from_keypress(self, key: Press) -> Elt:
-        key_unit = key.note / NUM_NOTES
+        key_unit = key.note_index / NUM_NOTES
         launch_point = key_unit * self.world_width
         return Elt(
                     x=launch_point,

@@ -36,7 +36,7 @@ class Keys(KeyAwareForm):
         res = np.zeros((self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         xs = np.linspace(start=0, stop=self.matrix_width, num=NUM_NOTES + 1, endpoint=True, dtype=np.uint8)
         for v in self.presses.values():
-            index = v.index
+            index = v.note_index
             hue = index / NUM_NOTES
             pixel = hsv_to_pixel(hue, 1.0, 1.0 if v else 0.0)
             lo = xs[index]
@@ -44,3 +44,4 @@ class Keys(KeyAwareForm):
             res[:,lo:hi,:] = np.tile( pixel , (self.matrix_height, hi - lo, 1))
             
         return Image.fromarray(res) #.transpose(Image.FLIP_TOP_BOTTOM)
+

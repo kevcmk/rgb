@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from rgb.constants import PAD_INDICES, DIAL_INDICES
 import logging
 import time
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from PIL import ImageFont
 import numpy as np
 import colorsys
@@ -39,18 +39,26 @@ def loopwait(t_last: float, max_dt: float):
         time.sleep(wait_time)
     return now, total_elapsed_since_last_frame
 
+RESOURCE_PATHS = ["src/rgb/resources/", "rgb/resources/"]
+def get_dictionary(name: str) -> List[str]:
+    for base in RESOURCE_PATHS:
+        path = f"{base}{name}"
+        try:
+            with open(path, 'r') as f:
+                return f.readlines()
+        except OSError:
+            log.debug(f"Could not open {path}, skipping...")
+    raise ValueError(f"Could not find {name} in {RESOURCE_PATHS}")
+
 def get_font(font, font_size: int):
-    font_paths = ["src/rgb/fonts/", "rgb/fonts/"]
-    for base in font_paths:
+    
+    for base in RESOURCE_PATHS:
         path = f"{base}{font}"
         try:
             return ImageFont.truetype(path, font_size)
         except OSError:
             log.debug(f"Could not open {path}, skipping...")
-    import os
-    print(os.getcwd())
-    print(os.listdir(os.getcwd()))
-    raise ValueError(f"Could not find font {font} in {font_paths}")
+    raise ValueError(f"Could not find font {font} in {RESOURCE_PATHS}")
 
 
 def pad(index: int, m: Dict) -> bool:
@@ -60,9 +68,11 @@ def dial(index: int, m: Dict) -> bool:
     return m['type'] == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
 
 def sustain_on(m: Dict) -> bool:
+    print("Sustain on check")
     return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127
 
 def sustain_off(m: Dict) -> bool:
+    print("Sustain off check")
     return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0
 
 
@@ -82,3 +92,5 @@ def sustain_off(m: Dict) -> bool:
 2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 1, 0], "midi_read_time": "2021-07-28 18:05:58.279284"}
 2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 2, 0], "midi_read_time": "2021-07-28 18:05:58.280181"}
 """
+
+
