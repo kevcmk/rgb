@@ -13,7 +13,7 @@ from json.decoder import JSONDecodeError
 from typing import Dict, Optional
 
 import rgb.imaqt
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, random_shape, stars, timer, basenoise)
+from rgb.form import (audio_spectrogram, gravity, keys, orbit, randomobject, stars, timer, basenoise)
 from rgb.display.basedisplay import BaseDisplay
 from rgb.messages import Button, Dial, Spectrum, Switch
 from rgb.utilities import loopwait
@@ -42,13 +42,13 @@ class ControlLoop():
             gravity.GravityKeys(dimensions, 0.006), 
             gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
             keys.Keys(dimensions), 
-            random_shape.RandomIcon(dimensions),
-            random_shape.RandomWord(dimensions),
-            random_shape.RandomJapaneseWord(dimensions),
-            random_shape.RandomNumber(dimensions),
-            random_shape.RandomSolidShape(dimensions), 
-            # random_shape.RandomOutlineShape(dimensions), 
-            random_shape.RandomOutlineCircle(dimensions), 
+            randomobject.RandomIcon(dimensions),
+            randomobject.RandomWord(dimensions),
+            randomobject.RandomJapaneseWord(dimensions),
+            randomobject.RandomNumber(dimensions),
+            randomobject.RandomSolidShape(dimensions), 
+            # randomobject.RandomOutlineShape(dimensions), 
+            randomobject.RandomOutlineCircle(dimensions), 
             basenoise.WhispNoise(dimensions),
             # basenoise.HueNoise(dimensions),
             # basenoise.BaseNoise(dimensions),

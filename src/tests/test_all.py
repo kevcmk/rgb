@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import pytest
 from rgb.form.keys import Keys
-from rgb.form.random_shape import *
+from rgb.form.randomobject import *
 from rgb.utilities import loopwait
 
 from rgb.form.keys import Keys
@@ -43,11 +43,10 @@ sorted_events = sorted(events.keys())
 matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
 matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
 
-@pytest.mark.parametrize("ParameterForm", [RandomIcon, RandomShape, RandomOutlineCircle, RandomOutlineShape, RandomWord, RandomJapaneseWord, RandomNumber])
-def test_random_shapes(ParameterForm):
+@pytest.mark.parametrize("ParameterForm", [RandomOutlineCircle, RandomOutlineShape, RandomSolidShape, RandomWord, RandomJapaneseWord, RandomNumber, RandomIcon])
+def test_random_object(ParameterForm):
     f = ParameterForm((matrix_width, matrix_height))
-    t_last = time.time()
-    for lap in range(2):
+    for _ in range(2):
         for i, event in enumerate(sorted_events):
             dt = sorted_events[i] - sorted_events[i-1] if i > 0 else sorted_events[i]
             f.midi_handler(events[event])

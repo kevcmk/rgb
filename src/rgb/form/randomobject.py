@@ -41,7 +41,7 @@ class Press():
         return int(((self.t * 1000) % 1000) * 360)
         
 
-class RandomShape(BaseForm):
+class RandomObject(BaseForm):
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
@@ -115,19 +115,19 @@ class RandomShape(BaseForm):
         pass
     
 
-class RandomOutlineCircle(RandomShape):
+class RandomOutlineCircle(RandomObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.ellipse((press.position_x - r, press.position_y - r, press.position_x + r, press.position_y + r), fill=None, outline=press.color)
 
-class RandomOutlineShape(RandomShape):
+class RandomOutlineShape(RandomObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=None, outline=press.color)
         
-class RandomSolidShape(RandomShape):
+class RandomSolidShape(RandomObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         draw_context.regular_polygon((press.position_x,press.position_y,r), press.num_sides, rotation=press.rotation, fill=press.color, outline=None)
-        
-class RandomText(RandomShape):
+     
+class RandomText(RandomObject):
     # TODO Make abstract?
     def select_string(self, press: Press) -> str:
         raise NotImplementedError
@@ -138,6 +138,7 @@ class RandomText(RandomShape):
         else:
             log.info(f"Adding {size} to font_cache, size {len(self._fonts)}")
             self._fonts[size] = get_font(self.font_name, int(size))
+            return self._fonts[size]
         
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
@@ -152,7 +153,7 @@ class RandomText(RandomShape):
             text=elt, 
             fill=(255, 0, 0), 
             anchor="mm",
-            font=self.font_cache(r)
+            font=self.font_cache(int(r))
         )
 
 class RandomWord(RandomText):
@@ -166,7 +167,7 @@ class RandomJapaneseWord(RandomText):
         super().__init__(dimensions)
         #self.font = get_font("sazanami-mincho.ttf", self.icon_size)
         #self.font = get_font("sazanami-gothic.ttf", self.icon_size)
-        self.font = get_font("HanaMinA.ttf", self.icon_size)
+        self.font_name = "HanaMinA.ttf"
 
     def select_string(self, press: Press) -> str:
         return RandomJapaneseWord.DICTIONARY[hash(press) % len(self.DICTIONARY)]

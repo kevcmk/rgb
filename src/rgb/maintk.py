@@ -1,5 +1,5 @@
 from rgb.form.keys import Keys
-from rgb.form.random_shape import *
+from rgb.form.randomobject import *
 import os
 from rgb.utilities import loopwait
 from rgb.display.tkcanvas import TkCanvas
