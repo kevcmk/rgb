@@ -9,6 +9,7 @@ import math
 import os
 import random
 import time
+from collections import OrderedDict, defaultdict, deque
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Tuple, Union
@@ -26,7 +27,7 @@ class SimpleSustainObject(BaseForm):
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.presses: Dict[str, Press] = dict()
+        self.presses: OrderedDict[str, Press] = OrderedDict()
         self.scale = 4 # Currently only for text size
         self.grow = 0
         # The logarithmic base of the grow rate of a shape. High notes grow faster than low notes, a low base means the differences between high and low notes are more apparent.
@@ -40,7 +41,7 @@ class SimpleSustainObject(BaseForm):
         }
     
     def cleanup(self):
-        self.presses = dict()
+        self.presses = OrderedDict()
 
     def calculate_radius(self, p: Press, shape_ratio: float, grow_ratio_logarithmic_base: float, current_time: float) -> float:
         note = p.note
@@ -68,7 +69,6 @@ class SimpleSustainObject(BaseForm):
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
-            # 21 , 108
             self.presses[note] = Press(
                 t=time.time(), 
                 note=note, 
@@ -96,7 +96,7 @@ class SimpleSustainObject(BaseForm):
         img = Image.new("RGB", (self.matrix_width, self.matrix_height))
         draw_context = ImageDraw.Draw(img)
         now = time.time()
-        for press in sorted(self.presses.values(), key=lambda x: x.t):
+        for press in self.presses.values():
             r = self.calculate_radius(press, self.shape_ratio, self.grow_ratio_logarithmic_base, current_time=now)
             self.draw_shape(draw_context, press, r)
         # Return the vertical flip, origin at the top.
@@ -106,6 +106,25 @@ class SimpleSustainObject(BaseForm):
     def draw_shape(self, draw_context, press: Press, r: float):
         pass
 
+
+class VornoiDiagram(SimpleSustainObject):
+    def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
+        
+        from scipy.spatial import Voronoi, voronoi_plot_2d
+        vor = Voronoi(points)
+
+class VerticalNotes(SimpleSustainObject):
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
+        self.x_coords = np.linspace(0, self.matrix_width - 1, NUM_NOTES + 1, dtype=np.uint8)
+    def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
+        (x, y) = self.calculate_xy_position(press)
+        color = self.calculate_color(press)
+        lo = self.x_coords[press.note]
+        hi = self.x_coords[press.note + 1]
+        draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
+
 class VerticalKeys(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
@@ -114,8 +133,9 @@ class VerticalKeys(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
-        lo = self.x_coords
-        draw_context.rectangle((x - r, y - r, x + r, y + r), fill=None, outline=color)
+        lo = self.x_coords[press.note]
+        hi = self.x_coords[press.note + 1]
+        draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
 class RandomOutlineCircle(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):

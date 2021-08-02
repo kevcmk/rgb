@@ -1,7 +1,7 @@
 import os
 from rgb.display.ledstrip import LedStrip
 from rgb.controlloop import ControlLoop
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, randomobject, stars, timer, basenoise)
+from rgb.form import (audio_spectrogram, gravity, keys, orbit, sustainobject, stars, timer, basenoise)
 
 import logging
 log = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     
     forms = (
         # stripes.Stripes(dimensions),
+        sustainobject.VerticalKeys(dimensions),
         keys.Keys(dimensions), 
         # orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
     )

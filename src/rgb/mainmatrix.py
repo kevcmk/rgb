@@ -1,7 +1,7 @@
 import os
 from rgb.display.hzelmatrix import HzelMatrix
 from rgb.controlloop import ControlLoop
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, randomobject, stars, timer, basenoise)
+from rgb.form import (audio_spectrogram, gravity, keys, orbit, sustainobject, stars, timer, basenoise)
 
 if __name__ == "__main__":
     dimensions = (int(os.environ.get("MATRIX_WIDTH", 32)), int(os.environ.get("MATRIX_HEIGHT", 64)))
@@ -9,14 +9,16 @@ if __name__ == "__main__":
     forms = (
         # stripes.Stripes(dimensions),
         keys.Keys(dimensions), 
+        sustainobject.VerticalKeys(dimensions),
+        sustainobject.RandomIcon(dimensions),
         gravity.Gravity(dimensions, 0.006), 
         gravity.GravityKeys(dimensions, 0.006), 
         gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
-        randomobject.RandomIcon(dimensions),
-        randomobject.RandomWord(dimensions),
-        randomobject.RandomJapaneseWord(dimensions),
-        randomobject.RandomNumber(dimensions),
-        randomobject.RandomSolidShape(dimensions), 
+        sustainobject.RandomIcon(dimensions),
+        sustainobject.RandomWord(dimensions),
+        sustainobject.RandomJapaneseWord(dimensions),
+        sustainobject.RandomNumber(dimensions),
+        sustainobject.RandomSolidShape(dimensions), 
         # randomobject.RandomOutlineShape(dimensions), 
         # randomobject.RandomOutlineCircle(dimensions), 
         # basenoise.WhispNoise(dimensions),
