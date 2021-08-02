@@ -52,10 +52,14 @@ class KeyAwareForm(BaseForm):
             elif note in self.presses:
                 del self.presses[note]
         elif sustain_on(value):
+            #TODO DEBUG 
+            log.info("Sustain on.")
             if self.released_presses_sustained is not None:
                 log.warning("Handling a sustain while released_presses_sustained is already defined. Replacing set of sustained keys.")    
             self.released_presses_sustained = set(self.presses.keys())
         elif sustain_off(value):
+        #TODO DEBUG 
+            log.info("Sustain off.")
             if self.released_presses_sustained is None:
                 log.warning("Handling a sustain-off while released_presses_sustained is None, ignoring.")
                 return

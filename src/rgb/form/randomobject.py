@@ -27,10 +27,6 @@ class Press():
     t: float
     note: int
     velocity: int
-    position_x: int
-    position_y: int
-    radius: int
-    color: Tuple[int, int, int]
 
     @property
     def num_sides(self):
@@ -46,6 +42,7 @@ class RandomObject(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.presses: Dict[str, Press] = dict()
+        self.scale = 4 # Currently only for text size
         self.grow = 0
         # The logarithmic base of the grow rate of a shape. High notes grow faster than low notes, a low base means the differences between high and low notes are more apparent.
         self.grow_ratio_logarithmic_base = 2
@@ -61,9 +58,24 @@ class RandomObject(BaseForm):
         self.presses = dict()
 
     @staticmethod
-    def calculate_radius(p: Press, grow_rate: float, t: float) -> float:
+    def calculate_radius(p: Press, shape_ratio: float, grow_rate: float, t: float) -> float:
+        note = p.note
+        base_radius = int(5 * math.log(109 - note, shape_ratio) + 1)
         note_growfactor = math.log(p.note, grow_rate)
-        return p.radius + (t - p.t) * note_growfactor + 1
+        return base_radius + (t - p.t) * note_growfactor + 1
+    @staticmethod
+    def calculate_hue(p: Press):
+        hue = (p.note % NUM_NOTES) / NUM_NOTES
+        rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
+    
+    @staticmethod
+    def calculate_xy_position(self, p: Press) -> Tuple[float, float]:
+        # Return the floating point fractional [0,1] within the matrix width and height
+        
+        position_x=
+        position_y=random.randint(0,self.matrix_height),
+            
     
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
@@ -71,31 +83,28 @@ class RandomObject(BaseForm):
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
             # 21 , 108
-            hue = (note % NUM_NOTES) / NUM_NOTES
-            rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
-            color = (int(255 * rgb[0]),int(255 * rgb[1]),int(255 * rgb[2]))
             self.presses[note] = Press(
                 t=time.time(), 
                 note=note, 
                 velocity=velocity,
-                position_x=random.randint(0,self.matrix_width),
-                position_y=random.randint(0,self.matrix_height),
-                radius=int(5 * math.log(109 - note, self.shape_ratio) + 1),
-                color=color
             )
         elif value['type'] == 'note_off':
             note = value['note']
             if note in self.presses:
                 del self.presses[note]
-        elif value['type'] == 'control_change' and value['control'] == 14: 
+
+        elif value['type'] == 'control_change' and value['control'] == 14:
+            self.scale = value['value']
+        elif value['type'] == 'control_change' and value['control'] == 15: 
             self.grow = value['value'] / 4
             log.debug('Grow: {self.grow}')
-        elif value['type'] == 'control_change' and value['control'] == 15: 
+        elif value['type'] == 'control_change' and value['control'] == 16: 
             self.grow_ratio_logarithmic_base = max(2 / 32, (value['value'] / 32)) + 1
             log.debug('Grow Ratio: {self.grow_ratio}')
-        elif value['type'] == 'control_change' and value['control'] == 16: 
+        elif value['type'] == 'control_change' and value['control'] == 17: 
             self.shape_ratio = max(2 / 32, (value['value'] / 32)) + 1
             log.debug('Grow Ratio: {self.grow_ratio}')
+            
         else:
             log.debug(f"Unhandled message: {value}")
 
@@ -105,7 +114,7 @@ class RandomObject(BaseForm):
         now = time.time()
         for press in sorted(self.presses.values(), key=lambda x: x.t):
             note_growfactor = math.log(press.note, self.grow_ratio_logarithmic_base)
-            r = press.radius + (now - press.t) * (self.grow * note_growfactor) + 1
+            r = calculate_radius(radius, self.shape_ratio, self.ra) + (now - press.t) * (self.grow * note_growfactor) + 1
             self.draw_shape(draw_context, press, r)
         # Return the vertical flip, origin at the top.
         return img
@@ -149,11 +158,12 @@ class RandomText(RandomObject):
         x = press.position_x
         y = press.position_y
         elt = self.select_string(press)
+        font_size = clamp(int(self.scale / 4), 4, 32) * 4 # Only divisible by 4
         draw_context.text((x,y), 
             text=elt, 
             fill=(255, 0, 0), 
             anchor="mm",
-            font=self.font_cache(int(r))
+            font=self.font_cache(font_size)
         )
 
 class RandomWord(RandomText):
@@ -175,7 +185,8 @@ class RandomJapaneseWord(RandomText):
 class RandomIcon(RandomText):
     SYMBOLS = [c for c in "★✶✢❤︎✕⨳♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"]
     def select_string(self, press: Press) -> str:
-        return RandomIcon.SYMBOLS[hash(press) % len(self.SYMBOLS)]
+        index = hash(press) % len(self.SYMBOLS)
+        return RandomIcon.SYMBOLS[index] + str(index)
     
     
 class RandomNumber(RandomText):

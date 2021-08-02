@@ -10,10 +10,9 @@ from multiprocessing import connection
 import os
 import time
 from json.decoder import JSONDecodeError
-from typing import Dict, Optional
+from typing import Dict, Iterable, List, Optional
 
-import rgb.imaqt
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, randomobject, stars, timer, basenoise)
+from rgb.imaqt import IMAQT
 from rgb.display.basedisplay import BaseDisplay
 from rgb.messages import Button, Dial, Spectrum, Switch
 from rgb.utilities import loopwait
@@ -24,7 +23,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class ControlLoop():
 
-    def __init__(self, display: BaseDisplay, form: Optional[BaseForm]=None):
+    def __init__(self, display: BaseDisplay, forms: Iterable[BaseForm]):
         self.max_hz = 60
         self.display = display
 
@@ -32,31 +31,9 @@ class ControlLoop():
         self.clicker_sender_cxn: Optional[connection.Connection] = None
         self.midi_receiver_cxn: Optional[connection.Connection] = None
         self.midi_sender_cxn: Optional[connection.Connection] = None
-
-        dimensions = (self.display.width, self.display.height)
         
-        self.forms = (
-            # stripes.Stripes(dimensions),
-
-            gravity.Gravity(dimensions, 0.006), 
-            gravity.GravityKeys(dimensions, 0.006), 
-            gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
-            keys.Keys(dimensions), 
-            randomobject.RandomIcon(dimensions),
-            randomobject.RandomWord(dimensions),
-            randomobject.RandomJapaneseWord(dimensions),
-            randomobject.RandomNumber(dimensions),
-            randomobject.RandomSolidShape(dimensions), 
-            # randomobject.RandomOutlineShape(dimensions), 
-            randomobject.RandomOutlineCircle(dimensions), 
-            basenoise.WhispNoise(dimensions),
-            # basenoise.HueNoise(dimensions),
-            # basenoise.BaseNoise(dimensions),
-            # timer.Timer(dimensions),
-            # audio_spectrogram.AudioSpectrogram(dimensions),
-            # stars.Stars(dimensions), 
-            # orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
-        ) if not form else (form,)
+        self.forms = forms
+        
         self.form_index = 0
                 
 
@@ -121,7 +98,7 @@ class ControlLoop():
             }
         }
 
-        ima = imaqt.IMAQT.factory()
+        ima = IMAQT.factory()
         button_topic = os.environ["CONTROL_TOPIC"]
         ima.client.message_callback_add(button_topic, button_callback)
         midi_topic = os.environ["MIDI_CONTROL_TOPIC"]

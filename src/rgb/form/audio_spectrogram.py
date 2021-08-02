@@ -13,7 +13,7 @@ from random import randrange
 from typing import Dict, List, Set, Tuple
 import datetime
 import numpy as np
-import numpy.typing as npt
+
 from PIL import Image
 from rgb.form.baseform import BaseForm
 

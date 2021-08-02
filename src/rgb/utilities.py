@@ -68,12 +68,10 @@ def dial(index: int, m: Dict) -> bool:
     return m['type'] == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
 
 def sustain_on(m: Dict) -> bool:
-    print("Sustain on check")
-    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127
+    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127 and m.get("channel", None) == 0
 
 def sustain_off(m: Dict) -> bool:
-    print("Sustain off check")
-    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0
+    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0 and m.get("channel", None) == 0
 
 
 """

@@ -14,7 +14,7 @@ import logging
 import os
 
 import numpy as np
-import numpy.typing as npt
+
 
 from rgb.constants import PAD_INDICES, MIDI_DIAL_MAX, NUM_NOTES
 from rgb.messages import Dial
@@ -104,7 +104,8 @@ class Gravity(KeyAwareForm):
         # math.exp(0) = 1.0
         # math.exp(2.5) = 12.18
         
-        self.gravitational_constant = -(math.exp(constrained * 0.93) - 0.95)
+        self.gravitational_constant = -constrained * 10
+        log.info(f"Gravitational Constant set to {self.gravitational_constant}")
     
     def adjust_nozzle(self, state):
         """
@@ -118,6 +119,7 @@ class Gravity(KeyAwareForm):
         # math.exp(2.5) = 12.18
         
         self.shape = constrained * Gravity.MAX_SHAPE
+        log.info(f"Shape set to {self.shape}")
     
     @property
     def matrix_scale(self) -> float:

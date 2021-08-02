@@ -9,7 +9,7 @@ from random import randrange
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
-import numpy.typing as npt
+
 from PIL import Image, ImageDraw, ImageFont
 from rgb.form.baseform import BaseForm
 

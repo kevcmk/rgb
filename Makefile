@@ -20,11 +20,15 @@ build1d:
 		--pull \
 		-f "${RGBSTRIP_NAME}.Dockerfile" \
 		-t "${DOCKERHUB_USER}/${RGBSTRIP_NAME}:${GIT_HASH_TAG}" -t "${DOCKERHUB_USER}/${RGBSTRIP_NAME}:latest" \
-		--platform=linux/arm64 \
+		--platform=linux/arm64,linux/arm/v7 \
 		--push .
  
 restart:
 	@ssh dietpi@${TRGT} "sudo systemctl restart docker.rgb"
+restart1d:
+	@ssh dietpi@${TRGT} "sudo systemctl restart docker.rgbstrip"
 
 tail:
 	@ssh dietpi@${TRGT} "sudo journalctl -u docker.rgb -f"
+tail1d:
+	@ssh dietpi@${TRGT} "sudo journalctl -u docker.rgbstrip -f"

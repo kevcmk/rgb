@@ -15,7 +15,7 @@ import math
 from rgb.form.baseform import BaseForm
 
 import numpy as np
-import numpy.typing as npt
+
 
 from messages import Dial
 from utilities import clamp

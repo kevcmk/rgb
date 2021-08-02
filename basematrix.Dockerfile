@@ -7,7 +7,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-ENV PYTHONPATH "/app/rpi-rgb-led-matrix/bindings/python/samples/:${PYTHONPATH}"
+# TODO Why is this a current directory? This worked previously because a colon indicates 
+# a separate, and blank meant current directory
+ENV PYTHONPATH ".:/app/rpi-rgb-led-matrix/bindings/python/samples/:${PYTHONPATH}"
 
 COPY src/rgb /app/rgb
 
