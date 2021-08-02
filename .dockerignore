@@ -1,0 +1,3 @@
+./src/rgb/resources/*.ttf
+./src/rgb/resources/HanaMinA.ttf
+!./src/rgb/resources/DejaVuSans.ttf
