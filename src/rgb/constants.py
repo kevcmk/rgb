@@ -1,6 +1,7 @@
 from typing import Mapping
 
 NUM_NOTES = 12
+NUM_PIANO_KEYBOARD_KEYS = 108
 
 MIDI_DIAL_MAX = 127
 
