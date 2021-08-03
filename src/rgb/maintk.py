@@ -7,6 +7,7 @@ from rgb.form.iconography import Iconography
 from rgb.form.basenoise import *
 from rgb.form.cells import *
 from rgb.form.gravity import *
+from rgb.form.voronoi_diagram import *
 import time
 
 # if __name__ == "__main__":
