@@ -1,14 +1,15 @@
 import os
 from rgb.display.hzelmatrix import HzelMatrix
 from rgb.controlloop import ControlLoop
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, sustainobject, stars, timer, basenoise)
+from rgb.form import (audio_spectrogram, gravity, orbit, sustainobject, stars, timer, basenoise, voronoi_diagram)
 
 if __name__ == "__main__":
     dimensions = (int(os.environ.get("MATRIX_WIDTH", 32)), int(os.environ.get("MATRIX_HEIGHT", 64)))
         
     forms = (
         # stripes.Stripes(dimensions),
-        keys.Keys(dimensions), 
+        voronoi_diagram.VoronoiDiagram(dimensions),
+        sustainobject.VerticalNotes(dimensions), 
         sustainobject.VerticalKeys(dimensions),
         sustainobject.RandomIcon(dimensions),
         gravity.Gravity(dimensions, 0.006), 

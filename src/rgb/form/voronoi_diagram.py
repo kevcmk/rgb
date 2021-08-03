@@ -53,6 +53,7 @@ class VoronoiDiagram(SimpleSustainObject):
             
             # If a note is actuated, update.
             if len(self.presses) == 0:
+                log.info("Restarting polygon coordinate map")
                 self.polygon_coordinate_map = {}
             else:
                 arr = np.array([self.calculate_xy_position(x) for x in self.presses.values()])
@@ -60,6 +61,7 @@ class VoronoiDiagram(SimpleSustainObject):
                 self.polygon_coordinate_map = {}
                 for key, polygon in zip(self.presses.keys(), polygon_results):
                     self.polygon_coordinate_map[key] = polygon
+                    log.info(f"{key}: {polygon}")
 
     # def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
         # return super().step(dt)
@@ -75,6 +77,6 @@ class VoronoiDiagram(SimpleSustainObject):
     def draw_shape(self, draw_context, press: Press, r: float):
         coordinates = self.polygon_coordinate_map[press.note]
         color = self.calculate_color(press)
-        print(coordinates)
+        log.info(f"Rendering {press} with {coordinates}")
         draw_context.polygon(coordinates, fill=color, outline=None)
         # draw_context.rectangle((0,0,1,1), fill=self.calculate_color(press))

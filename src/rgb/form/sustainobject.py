@@ -61,6 +61,7 @@ class SimpleSustainObject(BaseForm):
     
     def calculate_xy_position(self, p: Press) -> Tuple[int, int]:
         fractional_x, fractional_y = self.calculate_xy_fractional_position(p)
+        log.info(f'Fractionx: {fractional_x}, {fractional_y}')
         return (int(fractional_x * self.matrix_width), int(fractional_y * self.matrix_height))
 
     def midi_handler(self, value: Dict):
@@ -78,7 +79,7 @@ class SimpleSustainObject(BaseForm):
             if note in self.presses:
                 del self.presses[note]
         elif value['type'] == 'control_change' and value['control'] == 14:
-            self.scale = value['value']
+            self.scale = value['value'] / MIDI_DIAL_MAX
         elif value['type'] == 'control_change' and value['control'] == 15: 
             self.grow = value['value'] / 4
             log.debug('Grow: {self.grow}')
@@ -173,7 +174,7 @@ class RandomText(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         elt = self.select_string(press)
-        font_size = clamp(int(self.scale / 4), 4, 32) * 4 # Only divisible by 4
+        font_size = clamp(int(self.scale * 32), 4, 32) * 4 # Only divisible by 4
         draw_context.text((x,y), 
             text=elt, 
             fill=(255, 0, 0), 
