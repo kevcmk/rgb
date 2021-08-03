@@ -11,11 +11,10 @@ from typing import Dict, Tuple, Union
 import numpy as np
 from noise import pnoise3, snoise3
 from PIL import Image
+from rgb.form.keyawareform import KeyAwareForm
 from rgb.constants import NUM_NOTES, MIDI_DIAL_MAX
 from rgb.form.baseform import BaseForm
 from rgb.utilities import hsv_to_pixel, dial
-
-from rgb.form.keys import KeyAwareForm
 
 log = logging.getLogger(__name__)
 log.setLevel(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))

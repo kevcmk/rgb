@@ -3,12 +3,9 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-from rgb.form.keys import Keys
 from rgb.form.sustainobject import *
 from rgb.form.orbit import *
 from rgb.utilities import loopwait
-
-from rgb.form.keys import Keys
 from rgb.form.basenoise import *
 from rgb.form.cells import *
 from rgb.form.gravity import *
@@ -56,7 +53,7 @@ def drive_event_loop_through_form(f: BaseForm):
                 f.midi_handler(events[event])
             f.step(dt)
 
-@pytest.mark.parametrize("form", [RandomOutlineCircle, RandomOutlineShape, RandomSolidShape, VerticalKeys, RandomWord, RandomJapaneseWord, RandomNumber, RandomIcon])
+@pytest.mark.parametrize("form", [RandomOutlineCircle, RandomOutlineShape, RandomSolidShape, VerticalNotes, VerticalKeys, RandomWord, RandomJapaneseWord, RandomNumber, RandomIcon])
 def test_sustainobject(form):
     f = form((matrix_width, matrix_height))
     drive_event_loop_through_form(f)
@@ -64,11 +61,6 @@ def test_sustainobject(form):
 @pytest.mark.parametrize("form", [Orbit])
 def test_orbit(form):
     f = form((matrix_width, matrix_height), fast_forward_scale=1.0)
-    drive_event_loop_through_form(f)
-
-@pytest.mark.parametrize("form", [Keys])
-def test_keys(form):
-    f = form((matrix_width, matrix_height))
     drive_event_loop_through_form(f)
 
 @pytest.mark.parametrize("form", [Gravity, GravityKeys, GravityKeysMultiNozzle])

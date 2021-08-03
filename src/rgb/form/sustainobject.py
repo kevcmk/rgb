@@ -7,12 +7,11 @@ from rgb.utilities import get_font
 import logging
 import math
 import os
-import random
 import time
 from collections import OrderedDict, defaultdict, deque
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
 
 import numpy as np
@@ -107,12 +106,6 @@ class SimpleSustainObject(BaseForm):
         pass
 
 
-class VornoiDiagram(SimpleSustainObject):
-    def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
-        
-        from scipy.spatial import Voronoi, voronoi_plot_2d
-        vor = Voronoi(points)
-
 class VerticalNotes(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
@@ -121,8 +114,8 @@ class VerticalNotes(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
-        lo = self.x_coords[press.note]
-        hi = self.x_coords[press.note + 1]
+        lo = self.x_coords[press.note % NUM_NOTES]
+        hi = self.x_coords[press.note % NUM_NOTES + 1]
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
 class VerticalKeys(SimpleSustainObject):

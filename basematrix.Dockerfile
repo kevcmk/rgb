@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install scipy
 
 # TODO Why is this a current directory? This worked previously because a colon indicates 
 # a separate, and blank meant current directory
