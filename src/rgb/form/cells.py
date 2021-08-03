@@ -56,7 +56,7 @@ class Cells(KeyAwareForm):
         
         for v in self.presses.values():
             x_index = hash(v.t) % self.practical_width
-            y_index = hash(v.t) % self.practical_height
+            y_index = hash(v.t * 2) % self.practical_height
             index = v.note % NUM_NOTES
             hue = index / NUM_NOTES
             pixel = hsv_to_pixel(hue, 1.0, 1.0)

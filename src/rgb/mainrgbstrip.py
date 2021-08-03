@@ -17,8 +17,8 @@ if __name__ == "__main__":
     
     forms = (
         # stripes.Stripes(dimensions),
-        sustainobject.VerticalKeys(dimensions),
-        keys.Keys(dimensions), 
+        sustainobject.VerticalNotes(dimensions), 
+        # sustainobject.VerticalKeys(dimensions),
         # orbit.Orbit(dimensions, fast_forward_scale=60 * 60 * 24 * 30), 
     )
     rgb1d = ControlLoop(display=display, forms=forms)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import colorsys
+from rgb.parameter_tuner import ParameterTuner
+from rgb.form.transitions import transition_ease_in
 from rgb.form.keyawareform import Press
 from rgb.utilities import get_dictionary
 from rgb.utilities import get_font
@@ -22,17 +24,20 @@ from rgb.utilities import clamp
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
+PRIME_FOR_HASH = 5021
+
 class SimpleSustainObject(BaseForm):
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.presses: OrderedDict[str, Press] = OrderedDict()
+        self.presses: OrderedDict[int, Press] = OrderedDict()
         self.scale = 4 # Currently only for text size
         self.grow = 0
         # The logarithmic base of the grow rate of a shape. High notes grow faster than low notes, a low base means the differences between high and low notes are more apparent.
         self.grow_ratio_logarithmic_base = 2
         # The logarithmic base of the size of a shape. High notes are smaller than low notes, a low base means the differences between high and low notes are more apparent.
         self.shape_ratio = 2
+        self.attack_time = 0.5
         self.handlers = {
             "Dial": {
                #0: lambda state: self.adjust_ffw(state),
@@ -43,20 +48,25 @@ class SimpleSustainObject(BaseForm):
         self.presses = OrderedDict()
 
     def calculate_radius(self, p: Press, shape_ratio: float, grow_ratio_logarithmic_base: float, current_time: float) -> float:
+        dt = current_time - p.t
         note = p.note
-        base_radius = int(5 * math.log(109 - note, shape_ratio) + 1)
+        note_unit = (109 - note) / note 
+        base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=2, maximum=20)
         note_growfactor = math.log(p.note, grow_ratio_logarithmic_base)
-        return base_radius + (current_time - p.t) * note_growfactor + 1
+        return base_radius + dt * note_growfactor
+        
     
     def calculate_color(self, p: Press):
+        dt = time.time() - p.t 
+        saturation = transition_ease_in(dt / self.attack_time)
         hue = (p.note % NUM_NOTES) / NUM_NOTES
-        rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        rgb = colorsys.hsv_to_rgb(hue, saturation, 1.0)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
     
     def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
         # Return the floating point fractional [0,1] within the matrix width and height
-        position_x = (hash(p.t) % 2048) / 2048 
-        position_y = (hash(p.t) % 4096) / 4096
+        position_x = (hash(p.t) % PRIME_FOR_HASH) / PRIME_FOR_HASH
+        position_y = (hash(p.t * 2) % PRIME_FOR_HASH) / PRIME_FOR_HASH
         return (position_x, position_y)
     
     def calculate_xy_position(self, p: Press) -> Tuple[int, int]:
@@ -83,12 +93,18 @@ class SimpleSustainObject(BaseForm):
         elif value['type'] == 'control_change' and value['control'] == 15: 
             self.grow = value['value'] / 4
             log.debug('Grow: {self.grow}')
-        elif value['type'] == 'control_change' and value['control'] == 16: 
-            self.grow_ratio_logarithmic_base = max(2 / 32, (value['value'] / 32)) + 1
-            log.debug('Grow Ratio: {self.grow_ratio}')
+        # elif value['type'] == 'control_change' and value['control'] == 16: 
+        #     self.grow_ratio_logarithmic_base = max(2 / 32, (value['value'] / 32)) + 1
+        #     log.debug('Grow Ratio: {self.grow_ratio}')
+        elif value['type'] == 'control_change' and value['control'] == 16:
+            self.attack_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
         elif value['type'] == 'control_change' and value['control'] == 17: 
-            self.shape_ratio = max(2 / 32, (value['value'] / 32)) + 1
+            self.shape_ratio = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, 1, 5)
+            
+
             log.debug('Grow Ratio: {self.grow_ratio}')
+        
+        
         else:
             log.debug(f"Unhandled message: {value}")
 
@@ -113,10 +129,9 @@ class VerticalNotes(SimpleSustainObject):
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
         self.x_coords = np.linspace(0, self.matrix_width - 1, NUM_NOTES + 1, dtype=np.uint8)
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
-        (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
         lo = self.x_coords[press.note % NUM_NOTES]
-        hi = self.x_coords[press.note % NUM_NOTES + 1]
+        hi = self.x_coords[press.note % NUM_NOTES + 1] - 1
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
 class VerticalKeys(SimpleSustainObject):
@@ -124,8 +139,8 @@ class VerticalKeys(SimpleSustainObject):
         super().__init__(dimensions)
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
         self.x_coords = np.linspace(0, self.matrix_width - 1, NUM_PIANO_KEYBOARD_KEYS + 1, dtype=np.uint8)
+
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
-        (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
         lo = self.x_coords[press.note]
         hi = self.x_coords[press.note + 1]

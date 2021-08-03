@@ -9,6 +9,8 @@ if __name__ == "__main__":
     forms = (
         # stripes.Stripes(dimensions),
         voronoi_diagram.VoronoiDiagram(dimensions),
+        voronoi_diagram.RedSaturationVoronoiDiagram(dimensions),
+        voronoi_diagram.RedValueVoronoiDiagram(dimensions),
         sustainobject.VerticalNotes(dimensions), 
         sustainobject.VerticalKeys(dimensions),
         sustainobject.RandomIcon(dimensions),

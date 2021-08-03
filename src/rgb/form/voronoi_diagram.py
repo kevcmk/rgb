@@ -2,6 +2,7 @@ from rgb.form.sustainobject import SimpleSustainObject
 from rgb.form.keyawareform import Press
 import logging
 import os
+import colorsys
 from PIL import Image, ImageDraw, ImageFont
 from typing import Dict, List, Set, Tuple, Union
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
@@ -43,8 +44,8 @@ class VoronoiDiagram(SimpleSustainObject):
         w = self.matrix_width
         h = self.matrix_height
         # These points are outside the window of view, but evenly surround the space. Without them we get QH6214 qhull input error:
-        self.base_points = np.array([ (-2 * w, h/2), (3*w, h/2), (w/2, -2 * h), (w/2, 3 *h)])
-        self.polygon_coordinate_map: Dict[str, List[Tuple[int,int]]] = {}
+        self.base_points = np.array([ (-10 * w, h/2), (11*w, h/2), (w/2, -10 * h), (w/2, 11 *h)])
+        self.polygon_coordinate_map: Dict[int, List[Tuple[int,int]]] = {}
         
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
@@ -60,23 +61,32 @@ class VoronoiDiagram(SimpleSustainObject):
                 polygon_results = self.get_polygons(arr)
                 self.polygon_coordinate_map = {}
                 for key, polygon in zip(self.presses.keys(), polygon_results):
+                    print(f"placing key: {key}")
                     self.polygon_coordinate_map[key] = polygon
                     log.info(f"{key}: {polygon}")
-
-    # def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
-        # return super().step(dt)
-        # if self.presses:
-        #     points = [self.calculate_xy_position(x) for x in self.presses.values()]
-        #     print(points)
-        #     vor = Voronoi(points)
-        #     print(vor)
-        #     self.voronoi = vor
-        # else:
-        #     return 
     
     def draw_shape(self, draw_context, press: Press, r: float):
+        print(f"draw_shape: {press.note}")
         coordinates = self.polygon_coordinate_map[press.note]
         color = self.calculate_color(press)
         log.info(f"Rendering {press} with {coordinates}")
         draw_context.polygon(coordinates, fill=color, outline=None)
         # draw_context.rectangle((0,0,1,1), fill=self.calculate_color(press))
+
+class RedSaturationVoronoiDiagram(VoronoiDiagram):
+    def calculate_color(self, p: Press):
+        v = (p.note % NUM_NOTES) / NUM_NOTES
+        rgb = colorsys.hsv_to_rgb(1, v, 1.0)
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
+
+class RedValueVoronoiDiagram(VoronoiDiagram):
+    def calculate_color(self, p: Press):
+        v = (p.note % NUM_NOTES) / NUM_NOTES
+        rgb = colorsys.hsv_to_rgb(1, 1.0, v)
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
+
+class SparseRedValueVoronoiDiagram(VoronoiDiagram):
+    def calculate_color(self, p: Press):
+        v = (p.note % NUM_NOTES) / NUM_NOTES if p.note < NUM_PIANO_KEYBOARD_KEYS else 0.0
+        rgb = colorsys.hsv_to_rgb(1, 1.0, v)
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
