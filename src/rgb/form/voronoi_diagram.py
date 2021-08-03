@@ -4,14 +4,18 @@ import logging
 import os
 import colorsys
 from PIL import Image, ImageDraw, ImageFont
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, Iterable, List, Set, Tuple, Union
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
 from scipy.spatial import Voronoi, voronoi_plot_2d
+from functools import cache
+from itertools import chain
 
 import numpy as np
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
+
+PRIMES = [2213,	2221,	2237,	2239,	2243,	2251,	2267,	2269,	2273,	2281, 2287, 2293]
 
 def show_voronoi_diagram(v: Voronoi):
     import matplotlib.pyplot as plt
@@ -23,10 +27,15 @@ class VoronoiDiagram(SimpleSustainObject):
     def get_base_point_array_list(self, a: np.ndarray) -> np.ndarray:
         return np.concatenate((self.base_points, a), axis=0)
     
-    def get_polygons(self, a: np.ndarray) -> List[List[Tuple[int,int]]]:
+    def get_polygons(self, a: np.ndarray, companion_points: int = 2) -> List[List[Tuple[int,int]]]:
         base_points_to_ignore = len(self.base_points)
         input_vertices = self.get_base_point_array_list(a)
-        v: Voronoi = Voronoi(input_vertices)
+        # Also include companion points to intoduce sparsity
+        companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=2) for p in self.presses.values()]))
+        companion_points_coordinates = self.companion_points_to_coordinates(companion_points_units)
+        concatenated = np.concatenate((input_vertices, companion_points_coordinates), axis=0) if companion_points_coordinates else input_vertices
+        import ipdb; ipdb.set_trace()
+        v: Voronoi = Voronoi(concatenated)
         output_polygons = []
         for nth_polygon in range(base_points_to_ignore, base_points_to_ignore + len(a)):
             region_index = v.point_region[nth_polygon]
@@ -46,7 +55,22 @@ class VoronoiDiagram(SimpleSustainObject):
         # These points are outside the window of view, but evenly surround the space. Without them we get QH6214 qhull input error:
         self.base_points = np.array([ (-10 * w, h/2), (11*w, h/2), (w/2, -10 * h), (w/2, 11 *h)])
         self.polygon_coordinate_map: Dict[int, List[Tuple[int,int]]] = {}
+    
+    @staticmethod
+    def get_press_companion_points(p: Press, count: int) -> List[Tuple[float,float]]:
+        assert count <= 6
+        h = hash(p)
+        acc = []
+        for i in range(count):
+            x_modulus = PRIMES[i]
+            y_modulus = PRIMES[-i]
+            acc.append(((h % x_modulus) / x_modulus, (h % y_modulus) / y_modulus))
+        return acc
+
+    def companion_points_to_coordinates(self, points: List[Tuple[float,float]]) -> List[Tuple[int,int]]: 
         
+        return [(int(p[0] * self.matrix_width), int(p[1] * self.matrix_height)) for p in points]
+
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
         if value['type'] in ('note_on', 'note_off'):
@@ -58,7 +82,7 @@ class VoronoiDiagram(SimpleSustainObject):
                 self.polygon_coordinate_map = {}
             else:
                 arr = np.array([self.calculate_xy_position(x) for x in self.presses.values()])
-                polygon_results = self.get_polygons(arr)
+                polygon_results = self.get_polygons(arr, 2)
                 self.polygon_coordinate_map = {}
                 for key, polygon in zip(self.presses.keys(), polygon_results):
                     print(f"placing key: {key}")

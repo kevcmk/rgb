@@ -1,7 +1,7 @@
 import os
 from rgb.display.ledstrip import LedStrip
 from rgb.controlloop import ControlLoop
-from rgb.form import (audio_spectrogram, gravity, keys, orbit, sustainobject, stars, timer, basenoise)
+from rgb.form import (audio_spectrogram, gravity, orbit, sustainobject, stars, timer, basenoise)
 
 import logging
 log = logging.getLogger(__name__)
