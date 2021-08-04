@@ -51,14 +51,13 @@ class SimpleSustainObject(BaseForm):
         dt = current_time - p.t
         note = p.note
         note_unit = (109 - note) / note 
-        base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=2, maximum=20)
+        base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=4, maximum=40)
         note_growfactor = math.log(p.note, grow_ratio_logarithmic_base)
         return base_radius + dt * note_growfactor
         
-    
     def calculate_color(self, p: Press):
         dt = time.time() - p.t 
-        saturation = transition_ease_in(dt / self.attack_time)
+        saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
         hue = (p.note % NUM_NOTES) / NUM_NOTES
         rgb = colorsys.hsv_to_rgb(hue, saturation, 1.0)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))

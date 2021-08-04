@@ -8,7 +8,7 @@ def transition_ease_in(x: float) -> float:
     elif x < 1.0:
         return 1 - (1-x) ** 3
     else:
-        return 0
+        return 1
 
 def transition_ease_in_reverse(x: float) -> float:
     # When a key is pressed, the https://easings.net/#easeOutCubic
@@ -17,4 +17,4 @@ def transition_ease_in_reverse(x: float) -> float:
     elif x < 1.0:
         return transition_ease_in(1 - x)
     else:
-        return 0
+        return 0    

@@ -1,3 +1,6 @@
+import time
+from rgb.form.transitions import transition_ease_in
+from rgb.parameter_tuner import ParameterTuner
 from rgb.form.sustainobject import SimpleSustainObject
 from rgb.form.keyawareform import Press
 import logging
@@ -7,7 +10,6 @@ from PIL import Image, ImageDraw, ImageFont
 from typing import Dict, Iterable, List, Set, Tuple, Union
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
 from scipy.spatial import Voronoi, voronoi_plot_2d
-from functools import cache
 from itertools import chain
 
 import numpy as np
@@ -31,10 +33,9 @@ class VoronoiDiagram(SimpleSustainObject):
         base_points_to_ignore = len(self.base_points)
         input_vertices = self.get_base_point_array_list(a)
         # Also include companion points to intoduce sparsity
-        companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=2) for p in self.presses.values()]))
+        companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=self.num_companion_points) for p in self.presses.values()]))
         companion_points_coordinates = self.companion_points_to_coordinates(companion_points_units)
         concatenated = np.concatenate((input_vertices, companion_points_coordinates), axis=0) if companion_points_coordinates else input_vertices
-        import ipdb; ipdb.set_trace()
         v: Voronoi = Voronoi(concatenated)
         output_polygons = []
         for nth_polygon in range(base_points_to_ignore, base_points_to_ignore + len(a)):
@@ -55,6 +56,7 @@ class VoronoiDiagram(SimpleSustainObject):
         # These points are outside the window of view, but evenly surround the space. Without them we get QH6214 qhull input error:
         self.base_points = np.array([ (-10 * w, h/2), (11*w, h/2), (w/2, -10 * h), (w/2, 11 *h)])
         self.polygon_coordinate_map: Dict[int, List[Tuple[int,int]]] = {}
+        self.num_companion_points = 2
     
     @staticmethod
     def get_press_companion_points(p: Press, count: int) -> List[Tuple[float,float]]:
@@ -68,11 +70,14 @@ class VoronoiDiagram(SimpleSustainObject):
         return acc
 
     def companion_points_to_coordinates(self, points: List[Tuple[float,float]]) -> List[Tuple[int,int]]: 
-        
         return [(int(p[0] * self.matrix_width), int(p[1] * self.matrix_height)) for p in points]
 
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
+        if value['type'] == 'control_change' and value['control'] == 15: 
+            self.num_companion_points = int(ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=6))
+            log.debug(f'Num companion points: {self.num_companion_points}')
+        
         if value['type'] in ('note_on', 'note_off'):
             # For any change, restart it.
             
@@ -85,18 +90,23 @@ class VoronoiDiagram(SimpleSustainObject):
                 polygon_results = self.get_polygons(arr, 2)
                 self.polygon_coordinate_map = {}
                 for key, polygon in zip(self.presses.keys(), polygon_results):
-                    print(f"placing key: {key}")
                     self.polygon_coordinate_map[key] = polygon
                     log.info(f"{key}: {polygon}")
     
     def draw_shape(self, draw_context, press: Press, r: float):
-        print(f"draw_shape: {press.note}")
         coordinates = self.polygon_coordinate_map[press.note]
         color = self.calculate_color(press)
-        log.info(f"Rendering {press} with {coordinates}")
         draw_context.polygon(coordinates, fill=color, outline=None)
         # draw_context.rectangle((0,0,1,1), fill=self.calculate_color(press))
 
+class ValueVoronoiDiagram(VoronoiDiagram):
+    def calculate_color(self, p: Press):
+        dt = time.time() - p.t 
+        x = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        hue = (p.note % NUM_NOTES) / NUM_NOTES
+        rgb = colorsys.hsv_to_rgb(hue, 1.0, x)
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
+    
 class RedSaturationVoronoiDiagram(VoronoiDiagram):
     def calculate_color(self, p: Press):
         v = (p.note % NUM_NOTES) / NUM_NOTES
