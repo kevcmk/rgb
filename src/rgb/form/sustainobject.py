@@ -59,7 +59,7 @@ class SimpleSustainObject(BaseForm):
         dt = time.time() - p.t 
         saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
         hue = (p.note % NUM_NOTES) / NUM_NOTES
-        rgb = colorsys.hsv_to_rgb(hue, saturation, 1.0)
+        rgb = colorsys.hsv_to_rgb(hue, saturation, saturation)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
     
     def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:

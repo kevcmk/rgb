@@ -10,13 +10,13 @@ import time
 w = 32
 h = 64
 @pytest.mark.parametrize("points", [
-    np.array([(0,0)]), 
-    np.array([(w/2,h/2)]), 
-    np.array([(0,0), (w,h)]), 
-    np.array([(0,0), (w, 0), (0, h), (w,h)])
+    [(0,0)], 
+    [(w/2,h/2)], 
+    [(0,0), (w,h)], 
+    [(0,0), (w, 0), (0, h), (w,h)]
 ])
 def test_no_fail(points):
     f = VoronoiDiagram((w, h))
-    polygons = f.get_polygons(points)
+    polygons = f.get_polygons(tuple(points))
     assert len(polygons) == len(points)
     

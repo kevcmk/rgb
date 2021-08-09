@@ -1,3 +1,4 @@
+from functools import lru_cache
 import time
 from rgb.form.transitions import transition_ease_in
 from rgb.parameter_tuner import ParameterTuner
@@ -27,11 +28,13 @@ def show_voronoi_diagram(v: Voronoi):
 class VoronoiDiagram(SimpleSustainObject):
     
     def get_base_point_array_list(self, a: np.ndarray) -> np.ndarray:
-        return np.concatenate((self.base_points, a), axis=0)
+        return np.concatenate((self.base_points, a), axis=0) if a.size != 0 else self.base_points
     
-    def get_polygons(self, a: np.ndarray, companion_points: int = 2) -> List[List[Tuple[int,int]]]:
+    @lru_cache
+    def get_polygons(self, a: Tuple[Tuple[int,int]]) -> List[List[Tuple[int,int]]]:
         base_points_to_ignore = len(self.base_points)
-        input_vertices = self.get_base_point_array_list(a)
+        
+        input_vertices = self.get_base_point_array_list(np.array(list(a)))
         # Also include companion points to intoduce sparsity
         companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=self.num_companion_points) for p in self.presses.values()]))
         companion_points_coordinates = self.companion_points_to_coordinates(companion_points_units)
@@ -77,22 +80,16 @@ class VoronoiDiagram(SimpleSustainObject):
         if value['type'] == 'control_change' and value['control'] == 15: 
             self.num_companion_points = int(ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=6))
             log.debug(f'Num companion points: {self.num_companion_points}')
+
+    def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
+        arr = tuple(self.calculate_xy_position(x) for x in self.presses.values())
+        polygon_results = self.get_polygons(arr)
+        self.polygon_coordinate_map = {}
+        for key, polygon in zip(self.presses.keys(), polygon_results):
+            self.polygon_coordinate_map[key] = polygon
+            log.info(f"{key}: {polygon}")
+        return super().step(dt)
         
-        if value['type'] in ('note_on', 'note_off'):
-            # For any change, restart it.
-            
-            # If a note is actuated, update.
-            if len(self.presses) == 0:
-                log.info("Restarting polygon coordinate map")
-                self.polygon_coordinate_map = {}
-            else:
-                arr = np.array([self.calculate_xy_position(x) for x in self.presses.values()])
-                polygon_results = self.get_polygons(arr, 2)
-                self.polygon_coordinate_map = {}
-                for key, polygon in zip(self.presses.keys(), polygon_results):
-                    self.polygon_coordinate_map[key] = polygon
-                    log.info(f"{key}: {polygon}")
-    
     def draw_shape(self, draw_context, press: Press, r: float):
         coordinates = self.polygon_coordinate_map[press.note]
         color = self.calculate_color(press)
@@ -112,6 +109,13 @@ class RedSaturationVoronoiDiagram(VoronoiDiagram):
         v = (p.note % NUM_NOTES) / NUM_NOTES
         rgb = colorsys.hsv_to_rgb(1, v, 1.0)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
+
+
+class RedStationarySaturationVoronoiDiagram(RedSaturationVoronoiDiagram):
+    def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
+        x = 0.5
+        y = (p.note % NUM_NOTES) / NUM_NOTES
+        return (x,y)
 
 class RedValueVoronoiDiagram(VoronoiDiagram):
     def calculate_color(self, p: Press):
