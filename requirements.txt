@@ -3,3 +3,4 @@ noise==1.2.2
 Pillow==8.2.0
 paho-mqtt==1.5.1
 scipy==1.7.1
+aubio==0.4.9

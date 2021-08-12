@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import colorsys
+from rgb.form.keyawareform import KeyAwareForm
+from rgb.form.transitions import transition_ease_in_reverse
 from rgb.parameter_tuner import ParameterTuner
 from rgb.form.transitions import transition_ease_in
 from rgb.form.keyawareform import Press
@@ -26,7 +28,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 PRIME_FOR_HASH = 5021
 
-class SimpleSustainObject(BaseForm):
+class SimpleSustainObject(KeyAwareForm):
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
@@ -38,6 +40,7 @@ class SimpleSustainObject(BaseForm):
         # The logarithmic base of the size of a shape. High notes are smaller than low notes, a low base means the differences between high and low notes are more apparent.
         self.shape_ratio = 2
         self.attack_time = 0.5
+        self.release_time = 0.5
         self.handlers = {
             "Dial": {
                #0: lambda state: self.adjust_ffw(state),
@@ -56,11 +59,17 @@ class SimpleSustainObject(BaseForm):
         return base_radius + dt * note_growfactor
         
     def calculate_color(self, p: Press):
-        dt = time.time() - p.t 
-        saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        if p._t_released is None:
+            dt = time.time() - p.t
+            saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        else:
+            log.warning("p.t_released is true")
+            dt = time.time() - p._t_released
+            saturation = transition_ease_in_reverse(dt / self.release_time) if self.release_time != 0 else 0.0
         hue = (p.note % NUM_NOTES) / NUM_NOTES
         rgb = colorsys.hsv_to_rgb(hue, saturation, saturation)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
+
     
     def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
         # Return the floating point fractional [0,1] within the matrix width and height
@@ -70,24 +79,13 @@ class SimpleSustainObject(BaseForm):
     
     def calculate_xy_position(self, p: Press) -> Tuple[int, int]:
         fractional_x, fractional_y = self.calculate_xy_fractional_position(p)
-        log.info(f'Fractionx: {fractional_x}, {fractional_y}')
         return (int(fractional_x * self.matrix_width), int(fractional_y * self.matrix_height))
 
     def midi_handler(self, value: Dict):
+        super().midi_handler(value)
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
-        if value['type'] == 'note_on':
-            note = value['note']
-            velocity = value['velocity'] / MIDI_DIAL_MAX
-            self.presses[note] = Press(
-                t=time.time(), 
-                note=note, 
-                velocity=velocity,
-            )
-        elif value['type'] == 'note_off':
-            note = value['note']
-            if note in self.presses:
-                del self.presses[note]
-        elif value['type'] == 'control_change' and value['control'] == 14:
+        
+        if value['type'] == 'control_change' and value['control'] == 14:
             self.scale = value['value'] / MIDI_DIAL_MAX
         elif value['type'] == 'control_change' and value['control'] == 15: 
             self.grow = value['value'] / 4
@@ -97,6 +95,7 @@ class SimpleSustainObject(BaseForm):
         #     log.debug('Grow Ratio: {self.grow_ratio}')
         elif value['type'] == 'control_change' and value['control'] == 16:
             self.attack_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
+            self.release_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
         elif value['type'] == 'control_change' and value['control'] == 17: 
             self.shape_ratio = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, 1, 5)
             

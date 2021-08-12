@@ -17,53 +17,73 @@ from rgb.form.baseform import BaseForm
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
-@dataclass(frozen=True)
+@dataclass(frozen=False, order=True)
 class Press():
-    t: float
     note: int
     velocity: int
+    t: float
+    
+    # t_released Does not impact a note's hash or equality!!
+    _t_released: Optional[float] = None
+
+    def __hash__(self) -> int:
+        return hash((self.note, self.velocity, self.t))
+    
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, Press):
+            return False
+        else:
+            return (self.note, self.velocity, self.t) == (o.note, o.velocity, o.t)
 
     @property
     def note_index(self):
         return self.note % NUM_NOTES
-
+    
 class KeyAwareForm(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.presses: Dict[str, Press] = dict()
         
         # None means sustain is off.
-        self.released_presses_sustained: Optional[Set] = None
+        self.sustain: bool = False
 
-    def cleanup(self):
-        self.presses = dict()
-    
+    def step(self, time_delta: float):
+        self.prune_presses_dictionary()
+        super().step(time_delta)
+
+    def prune_presses_dictionary(self, expire_after_ms: float = 1000):
+        if self.sustain:
+            return
+        for k,v in self.presses.items():
+            if v._t_released is not None and time.time() - v._t_released > expire_after_ms:
+                del self.presses[k]
+
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
-            self.presses[note] = Press(t=time.time(), note=note, velocity=velocity)
+            self.presses[note] = Press(note=note, velocity=velocity, t=time.time())
         elif value['type'] == 'note_off':
             note = value['note']
             # If it is sustained, it will be deleted by the sustain off event.
-            if self.released_presses_sustained is not None:
-                self.released_presses_sustained.add(note)
-            elif note in self.presses:
-                del self.presses[note]
+            if note in self.presses:
+                self.presses[note]._t_released = time.time()
+            else:
+                log.warning(f"Note off event for note {note} without a corresponding note in self.presses.")
         elif sustain_on(value):
-            #TODO DEBUG 
-            log.info("Sustain on.")
-            if self.released_presses_sustained is not None:
-                log.warning("Handling a sustain while released_presses_sustained is already defined. Replacing set of sustained keys.")    
-            self.released_presses_sustained = set(self.presses.keys())
+            log.debug("Sustain on.")
+            if self.sustain:
+                log.warning("Handling a sustain while sustain is already defined. Replacing set of sustained keys.")    
+            self.sustain = True
         elif sustain_off(value):
-        #TODO DEBUG 
-            log.info("Sustain off.")
-            if self.released_presses_sustained is None:
-                log.warning("Handling a sustain-off while released_presses_sustained is None, ignoring.")
+        
+            log.debug("Sustain on.")
+            if not self.sustain:
+                log.warning("Handling a sustain-off while sustain is None, ignoring.")
                 return
-            self.presses = {k:v for k,v in self.presses.items() if k not in self.released_presses_sustained}
-            self.released_presses_sustained = None
+            self.sustain = False
+            
+            
 
             
