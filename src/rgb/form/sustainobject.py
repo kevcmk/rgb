@@ -122,7 +122,7 @@ class SimpleSustainObject(KeyAwareForm):
             r = self.calculate_radius(press, self.shape_ratio, self.grow_ratio_logarithmic_base, current_time=now)
             self.draw_shape(draw_context, press, r)
         # Return the vertical flip, origin at the top.
-        return Image.alpha_composite(base, shapes) # img #.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
+        return Image.alpha_composite(base, shapes).convert("RGB") # img #.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
 
     @abstractmethod
     def draw_shape(self, draw_context, press: Press, r: float):
