@@ -54,7 +54,6 @@ class Stars(BaseForm):
         super().__init__(dimensions)
         self.population = 256
         self.elts: Set[Elt] = {Elt() for _ in range(self.population)}
-        self.handlers = {}
     
     def midi_handler(self, value: Dict):
         # TODO

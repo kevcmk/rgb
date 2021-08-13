@@ -2,9 +2,8 @@
 
 import colorsys
 from rgb.form.keyawareform import KeyAwareForm
-from rgb.form.transitions import transition_ease_in_reverse
 from rgb.parameter_tuner import ParameterTuner
-from rgb.form.transitions import transition_ease_in
+from rgb.form.transitions import transition_ease_in, transition_ease_out_cubic
 from rgb.form.keyawareform import Press
 from rgb.utilities import get_dictionary
 from rgb.utilities import get_font
@@ -41,36 +40,48 @@ class SimpleSustainObject(KeyAwareForm):
         self.shape_ratio = 2
         self.attack_time = 0.5
         self.release_time = 0.5
-        self.handlers = {
-            "Dial": {
-               #0: lambda state: self.adjust_ffw(state),
-            }
-        }
-    
-    def cleanup(self):
-        self.presses = OrderedDict()
-
+         
+ 
     def calculate_radius(self, p: Press, shape_ratio: float, grow_ratio_logarithmic_base: float, current_time: float) -> float:
-        dt = current_time - p.t
+        # If released, stop growing
+        dt = p._t_released - p.t if p._t_released else current_time - p.t 
         note = p.note
         note_unit = (109 - note) / 109  # A [0-1) number
         base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=4, maximum=40)
         note_growfactor = math.log(p.note, grow_ratio_logarithmic_base)
         return base_radius + dt * note_growfactor
-        
-    def calculate_color(self, p: Press):
-        if p._t_released is None:
-            dt = time.time() - p.t
-            saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
-        else:
-            log.warning("p.t_released is true")
-            dt = time.time() - p._t_released
-            saturation = transition_ease_in_reverse(dt / self.release_time) if self.release_time != 0 else 0.0
-        hue = (p.note % NUM_NOTES) / NUM_NOTES
-        rgb = colorsys.hsv_to_rgb(hue, saturation, saturation)
-        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
 
     
+    def calculate_color(self, p: Press):
+        dt = time.time() - p.t    
+        
+        # if p._t_released is None:
+        #     saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        #     alpha = saturation # They can be the same
+        # else:
+        #     dtrelease = time.time() - p._t_released
+        #     saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        #     alpha = 1 - transition_ease_in(dtrelease / self.release_time) if self.release_time != 0 else 0.0
+
+        
+        x = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        
+        if p._t_released is None:
+            saturation = x
+            alpha = x # They can be the same
+            print(f"Gaining: Saturation {saturation} Alpha {alpha}")
+        else:
+            time_since_release = time.time() - p._t_released
+            decay = 1 - transition_ease_out_cubic(time_since_release / self.release_time) if self.release_time != 0 else 0.0
+            saturation = decay * x
+            alpha = saturation
+            print(f"Decay {decay} Saturation {saturation} Alpha {alpha}")
+            
+        hue = (p.note % NUM_NOTES) / NUM_NOTES
+        rgb = colorsys.hsv_to_rgb(hue, saturation, 1.0)
+        # print(f"Color here: {(int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]), int(255 * alpha))}")
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]), int(255 * alpha))
+
     def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
         # Return the floating point fractional [0,1] within the matrix width and height
         position_x = (hash(p.t) % PRIME_FOR_HASH) / PRIME_FOR_HASH
@@ -90,36 +101,28 @@ class SimpleSustainObject(KeyAwareForm):
         elif value['type'] == 'control_change' and value['control'] == 15: 
             self.grow = value['value'] / 4
             log.debug('Grow: {self.grow}')
-        # elif value['type'] == 'control_change' and value['control'] == 16: 
-        #     self.grow_ratio_logarithmic_base = max(2 / 32, (value['value'] / 32)) + 1
-        #     log.debug('Grow Ratio: {self.grow_ratio}')
         elif value['type'] == 'control_change' and value['control'] == 16:
             self.attack_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
             self.release_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
         elif value['type'] == 'control_change' and value['control'] == 17: 
             self.shape_ratio = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, 1, 5)
-            
-
             log.debug('Grow Ratio: {self.grow_ratio}')
-        
-        
-        else:
-            log.debug(f"Unhandled message: {value}")
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
-        img = Image.new("RGB", (self.matrix_width, self.matrix_height))
-        draw_context = ImageDraw.Draw(img)
+        super().step(dt) # Ignore super's return value, it's not relevant.
+        img = Image.new("RGBA", (self.matrix_width, self.matrix_height))
+        self.cleanup()
+        draw_context = ImageDraw.Draw(img, mode="RGBA")
         now = time.time()
         for press in self.presses.values():
             r = self.calculate_radius(press, self.shape_ratio, self.grow_ratio_logarithmic_base, current_time=now)
             self.draw_shape(draw_context, press, r)
         # Return the vertical flip, origin at the top.
-        return img
+        return img.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
 
     @abstractmethod
     def draw_shape(self, draw_context, press: Press, r: float):
         pass
-
 
 class VerticalNotes(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
@@ -138,11 +141,19 @@ class VerticalKeys(SimpleSustainObject):
         super().__init__(dimensions)
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
         self.x_coords = np.linspace(0, self.matrix_width, NUM_PIANO_KEYBOARD_KEYS + 1, dtype=np.uint8)
+<<<<<<< HEAD
         
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         color = self.calculate_color(press)
         lo = self.x_coords[press.note]
         # If co-vertical, the -1 produces an x less than lo, thus the column can be though of as a single [lo,lo]
+=======
+
+    def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
+        color = self.calculate_color(press)
+        lo = self.x_coords[press.note]
+         # If co-vertical, the -1 produces an x less than lo, thus the column can be though of as a single [lo,lo]
+>>>>>>> 99267a2 (Functions look right, but alpha not compositing)
         hi = max(lo, self.x_coords[press.note + 1] - 1)
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
@@ -164,6 +175,7 @@ class RandomSolidShape(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
+        print(f"Color: {color}")
         num_sides = int(((press.t * 100) % 5) + 3)
         rotation = ((press.t * 1000) % 1000) * 360
         draw_context.regular_polygon((x, y, r), num_sides, rotation=rotation, fill=color, outline=None)
@@ -217,7 +229,7 @@ class RandomIcon(RandomText):
     SYMBOLS = [c for c in "★✶✢❤︎✕⨳♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"]
     def select_string(self, press: Press) -> str:
         index = hash(press) % len(self.SYMBOLS)
-        return RandomIcon.SYMBOLS[index] + str(index)
+        return RandomIcon.SYMBOLS[index]
     
     
 class RandomNumber(RandomText):

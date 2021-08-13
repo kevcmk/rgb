@@ -14,7 +14,6 @@ class BaseForm(ABC):
 
     def __init__(self, dimensions: Tuple[int, int]):
         (self.matrix_width, self.matrix_height) = dimensions
-        self.handlers = {}
 
     def _instrumented_step(self, dt: float) -> Union[Image.Image,np.ndarray]:
         a = time.time()

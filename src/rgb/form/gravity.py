@@ -66,13 +66,6 @@ class Gravity(KeyAwareForm):
         self.particles: Set[Elt] = set()
         self.jitters = [random.uniform(0.85,1.15) for _ in range(Gravity.JITTERS)]
           
-        self.handlers = {
-            "Button": {
-                0: lambda state: self.button_0_handler(state),
-                1: lambda state: self.button_1_handler(state)
-            },
-        }
-    
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
         # TODO

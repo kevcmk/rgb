@@ -40,6 +40,10 @@ class Press():
         return self.note % NUM_NOTES
     
 class KeyAwareForm(BaseForm):
+
+    @staticmethod
+    def is_expired(v, expire_after_s: float) -> bool:
+        return v._t_released is not None and time.time() - v._t_released > expire_after_s
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.presses: Dict[str, Press] = dict()
@@ -51,15 +55,15 @@ class KeyAwareForm(BaseForm):
         self.prune_presses_dictionary()
         super().step(time_delta)
 
-    def prune_presses_dictionary(self, expire_after_ms: float = 1000):
+    def prune_presses_dictionary(self, expire_after_s: float = 1):
         if self.sustain:
             return
-        for k,v in self.presses.items():
-            if v._t_released is not None and time.time() - v._t_released > expire_after_ms:
-                del self.presses[k]
+        self.presses = {k:v for k,v in self.presses.items() if not KeyAwareForm.is_expired(v, expire_after_s)}
+        
 
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
+        log.info(value)
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
@@ -77,8 +81,7 @@ class KeyAwareForm(BaseForm):
                 log.warning("Handling a sustain while sustain is already defined. Replacing set of sustained keys.")    
             self.sustain = True
         elif sustain_off(value):
-        
-            log.debug("Sustain on.")
+            log.debug("Sustain off.")
             if not self.sustain:
                 log.warning("Handling a sustain-off while sustain is None, ignoring.")
                 return

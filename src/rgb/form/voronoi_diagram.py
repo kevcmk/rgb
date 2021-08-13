@@ -79,7 +79,6 @@ class VoronoiDiagram(SimpleSustainObject):
         super().midi_handler(value)
         if value['type'] == 'control_change' and value['control'] == 15: 
             self.num_companion_points = int(ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=6))
-            log.debug(f'Num companion points: {self.num_companion_points}')
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
         arr = tuple(self.calculate_xy_position(x) for x in self.presses.values())
@@ -87,7 +86,6 @@ class VoronoiDiagram(SimpleSustainObject):
         self.polygon_coordinate_map = {}
         for key, polygon in zip(self.presses.keys(), polygon_results):
             self.polygon_coordinate_map[key] = polygon
-            log.info(f"{key}: {polygon}")
         return super().step(dt)
         
     def draw_shape(self, draw_context, press: Press, r: float):

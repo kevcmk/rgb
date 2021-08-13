@@ -10,13 +10,6 @@ from rgb.form.gravity import *
 from rgb.form.voronoi_diagram import *
 import time
 
-# if __name__ == "__main__":
-#     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
-#     matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
-#     display = TkCanvas(dimensions=(matrix_width, matrix_height))
-#     rgb2d = ControlLoop(display=display, form=Iconography((matrix_width, matrix_height)))
-#     rgb2d.blocking_loop()
-
 hz = 60
 max_dt = 1 / hz
 
@@ -29,12 +22,25 @@ events = {
     50: {"type": "note_on", "note": 51, "velocity": 105 },
     90: {"type": "note_off", "note": 42, "velocity": 105 },
     100: {"type": "note_off", "note": 45, "velocity": 105 },
+    
+    # Release note 44 and 45
+    105: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
+
     110: {"type": "note_off", "note": 51, "velocity": 105 },
     120: {"type": "note_off", "note": 48, "velocity": 105 },
-    # Release note 44 and 45
-    180: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0}
+    
 }
-event_mod = max(events.keys())
+
+events = {
+    20: {"type": "note_on", "note": 42, "velocity": 105 },
+    # Sustain note 44 and 45
+    100: {"type": "note_off", "note": 42, "velocity": 105 },
+    
+    # Release note 44 and 45
+    150: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
+}
+
+event_mod = max(events.keys()) + 1
 
 if __name__ == "__main__":
     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))

@@ -1,9 +1,16 @@
+from dataclasses import dataclass
 from typing import List
 from rgb.utilities import clamp
 import logging
 import os
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
+
+
+@dataclass
+class Parameters:
+    dials: List[float]
+    buttons: List[float]
 
 class ParameterTuner:
 
