@@ -29,7 +29,6 @@ class Iconography(BaseForm):
         self.font = get_font("DejaVuSans.ttf", self.icon_size)
         # self.palette = "⤬⤯★✶✢❤︎✕⨳⩕⩙♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"
         self.palette = "𓃠𓃡𓃢𓃣𓃤𓃥𓃦𓃧𓃨𓃩𓃪𓃫𓃬𓃭𓃮𓃯𓀠𓀡𓀢𓀣𓀤𓀥𓀦"
-        self.handlers = {}
         
     def _render(self) -> Image.Image:
         im = Image.new("RGB", (self.matrix_width, self.matrix_height))

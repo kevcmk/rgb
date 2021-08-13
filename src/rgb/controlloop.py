@@ -1,5 +1,6 @@
 
 import datetime
+from rgb.parameter_tuner import ParameterTuner
 from rgb.utilities import pad
 from rgb.form.baseform import BaseForm
 
@@ -10,7 +11,7 @@ from multiprocessing import connection
 import os
 import time
 from json.decoder import JSONDecodeError
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, List, Optional
 
 from rgb.imaqt import IMAQT
 from rgb.display.basedisplay import BaseDisplay
@@ -23,7 +24,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class ControlLoop():
 
-    def __init__(self, display: BaseDisplay, forms: Iterable[BaseForm]):
+    def __init__(self, display: BaseDisplay, forms: List[BaseForm]):
         self.max_hz = 60
         self.display = display
 
@@ -31,6 +32,7 @@ class ControlLoop():
         self.clicker_sender_cxn: Optional[connection.Connection] = None
         self.midi_receiver_cxn: Optional[connection.Connection] = None
         self.midi_sender_cxn: Optional[connection.Connection] = None
+        self.brightness = 1.0
         
         self.forms = forms
         
@@ -94,7 +96,12 @@ class ControlLoop():
        
         self.handlers = {
             "Button": {
-                2: lambda state: self.next_form(state)
+                0: lambda state: self.previous_form(state),
+                1: lambda state: self.next_form(state),
+                2: lambda state: self.first_form()
+            },
+            "Dial": {
+                0: lambda state: self.set_brightness(state),
             }
         }
 
@@ -131,6 +138,21 @@ class ControlLoop():
         if state:
             self.form.cleanup()
             self.form_index = (self.form_index - 1) % len(self.forms)
+
+    def set_brightness(self, state):
+        self.brightness = state
+        if state > 0.5: 
+            # Ignore this if it's high
+            log.info("Brightness tuned, but >0.5 so ignoring entirely.")
+            pass
+        if state < 0.5:
+            brightness_value = int(ParameterTuner.linear_scale(state * 2, 0, 255))
+            try:
+                # TODO Abstract into display BaseDisplay
+                self.display.display.set_brightness(brightness_value)
+            except AttributeError:
+                log.info("Brightness tuned, but display brightness setting not supported.")
+            
     
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}

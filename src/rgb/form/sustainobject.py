@@ -126,7 +126,8 @@ class VerticalNotes(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
-        self.x_coords = np.linspace(0, self.matrix_width - 1, NUM_NOTES + 1, dtype=np.uint8)
+        self.x_coords = np.linspace(0, self.matrix_width, NUM_NOTES + 1, dtype=np.uint8)
+
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         color = self.calculate_color(press)
         lo = self.x_coords[press.note % NUM_NOTES]
@@ -137,12 +138,13 @@ class VerticalKeys(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
-        self.x_coords = np.linspace(0, self.matrix_width - 1, NUM_PIANO_KEYBOARD_KEYS + 1, dtype=np.uint8)
-
+        self.x_coords = np.linspace(0, self.matrix_width, NUM_PIANO_KEYBOARD_KEYS + 1, dtype=np.uint8)
+        
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         color = self.calculate_color(press)
         lo = self.x_coords[press.note]
-        hi = self.x_coords[press.note + 1]
+        # If co-vertical, the -1 produces an x less than lo, thus the column can be though of as a single [lo,lo]
+        hi = max(lo, self.x_coords[press.note + 1] - 1)
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
 class RandomOutlineCircle(SimpleSustainObject):

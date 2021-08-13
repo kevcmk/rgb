@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from PIL import Image
@@ -22,7 +22,7 @@ class BaseDisplay(ABC):
         self.height = dimensions[1]
 
     @abstractmethod
-    def display(self, image: Union[Image.Image, np.ndarray]):
+    def display(self, image: Union[Image.Image, np.ndarray], override_brightness: Optional[float] = None):
         pass
     
 
