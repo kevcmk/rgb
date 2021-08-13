@@ -110,15 +110,16 @@ class SimpleSustainObject(KeyAwareForm):
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
         super().step(dt) # Ignore super's return value, it's not relevant.
-        img = Image.new("RGBA", (self.matrix_width, self.matrix_height))
+        base = Image.new("RGBA", (self.matrix_width, self.matrix_height), (0, 0, 0, 255)) 
+        shapes = Image.new("RGBA", (self.matrix_width, self.matrix_height), (0, 0, 0, 0))
         self.cleanup()
-        draw_context = ImageDraw.Draw(img, mode="RGBA")
+        draw_context = ImageDraw.Draw(shapes)
         now = time.time()
         for press in self.presses.values():
             r = self.calculate_radius(press, self.shape_ratio, self.grow_ratio_logarithmic_base, current_time=now)
             self.draw_shape(draw_context, press, r)
         # Return the vertical flip, origin at the top.
-        return img.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
+        return Image.alpha_composite(base, shapes) # img #.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
 
     @abstractmethod
     def draw_shape(self, draw_context, press: Press, r: float):
