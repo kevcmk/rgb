@@ -72,7 +72,10 @@ class SimpleSustainObject(KeyAwareForm):
             print(f"Gaining: Saturation {saturation} Alpha {alpha}")
         else:
             time_since_release = time.time() - p._t_released
-            decay = 1 - transition_ease_out_cubic(time_since_release / self.release_time) if self.release_time != 0 else 0.0
+            if self.release_time != 0:
+                decay = 1 - transition_ease_out_cubic(time_since_release / self.release_time)
+            else:
+                decay = 0.0
             saturation = decay * x
             alpha = saturation
             print(f"Decay {decay} Saturation {saturation} Alpha {alpha}")

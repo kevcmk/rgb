@@ -26,4 +26,4 @@ def transition_ease_out_cubic(x: float) -> float:
     elif x < 1.0:
         return 1 - (1-x) ** 3
     else:
-        return 0
+        return 1
