@@ -50,7 +50,7 @@ class SimpleSustainObject(BaseForm):
     def calculate_radius(self, p: Press, shape_ratio: float, grow_ratio_logarithmic_base: float, current_time: float) -> float:
         dt = current_time - p.t
         note = p.note
-        note_unit = (109 - note) / note 
+        note_unit = (109 - note) / 109  # A [0-1) number
         base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=4, maximum=40)
         note_growfactor = math.log(p.note, grow_ratio_logarithmic_base)
         return base_radius + dt * note_growfactor

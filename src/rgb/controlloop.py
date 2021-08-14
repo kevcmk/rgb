@@ -149,9 +149,9 @@ class ControlLoop():
             brightness_value = int(ParameterTuner.linear_scale(state * 2, 0, 255))
             try:
                 # TODO Abstract into display BaseDisplay
-                self.display.display.set_brightness(brightness_value)
-            except AttributeError:
-                log.info("Brightness tuned, but display brightness setting not supported.")
+                self.display.matrix.set_brightness(brightness_value)
+            except AttributeError as e:
+                log.exception("Brightness tuned, but display brightness setting not supported.", e)
             
     
     def midi_handler(self, value: Dict):
