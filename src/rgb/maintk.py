@@ -50,6 +50,7 @@ if __name__ == "__main__":
     # f = VerticalKeys((matrix_width, matrix_height))
     i = 0
     t_last = time.time()
+    f.midi_handler({"type": "note_on", "note": 48, "velocity": 105 })
     while True:
         i += 1  
         if i % event_mod in events:

@@ -60,6 +60,8 @@ class KeyAwareForm(BaseForm):
             return
         self.presses = {k:v for k,v in self.presses.items() if not KeyAwareForm.is_expired(v, expire_after_s)}
         
+    def cleanup(self):
+        self.presses = dict()
 
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
