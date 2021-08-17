@@ -19,11 +19,11 @@ def transition_ease_in_reverse(x: float) -> float:
     else:
         return 0    
 
-def transition_ease_out_cubic(x: float) -> float:
+def transition_ease_out_exponential(x: float, exponent: float = 3) -> float:
     # https://easings.net/#easeOutCubic
     if x < 0:
         raise ValueError("Can't handle negative time")
     elif x < 1.0:
-        return 1 - (1-x) ** 3
+        return 1 - (1-x) ** exponent
     else:
         return 1

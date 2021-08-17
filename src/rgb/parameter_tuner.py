@@ -10,7 +10,6 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 @dataclass
 class Parameters:
     dials: List[float]
-    buttons: List[float]
 
 class ParameterTuner:
 
@@ -22,14 +21,6 @@ class ParameterTuner:
     #         log.warning(f"Value, {value}, outside of [0,1] on index {index}.")
     #         value = clamp(value, 0, 1)
     #     self._dials[index] = value
-
-    # def linear(self, value: int, minimum: float, maximum: float) -> float:
-    #     delta = maximum - minimum
-    #     return minimum + self._dials[index] * delta
-    
-    # def exponential(self, index: int, exponent: float, minimum: float, maximum: float) -> float:
-    #     delta = maximum - minimum
-    #     return minimum + self._dials[index] ** exponent * delta
 
     # def discrete(self, index: int, options: List):
     #     index = int(self._dials[index] * len(options))

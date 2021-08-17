@@ -3,7 +3,7 @@
 import colorsys
 from rgb.form.keyawareform import KeyAwareForm
 from rgb.parameter_tuner import ParameterTuner
-from rgb.form.transitions import transition_ease_in, transition_ease_out_cubic
+from rgb.form.transitions import transition_ease_in, transition_ease_out_exponential
 from rgb.form.keyawareform import Press
 from rgb.utilities import get_dictionary
 from rgb.utilities import get_font
@@ -11,16 +11,16 @@ import logging
 import math
 import os
 import time
-from collections import OrderedDict, defaultdict, deque
+from collections import OrderedDict
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
 
 import numpy as np
 from rgb.form.baseform import BaseForm
 from PIL import Image, ImageDraw, ImageFont
-from rgb.utilities import clamp
+from rgb.utilities import is_key_press
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -29,62 +29,110 @@ PRIME_FOR_HASH = 5021
 
 class SimpleSustainObject(KeyAwareForm):
 
+    MAX_ATTACK_TIME_S = 0.5
+    MAX_RELEASE_TIME_S = 3.0
+
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
+        
+        self.base_hue = 0.0
+        
         self.presses: OrderedDict[int, Press] = OrderedDict()
-        self.scale = 4 # Currently only for text size
-        self.grow = 0
-        # The logarithmic base of the grow rate of a shape. High notes grow faster than low notes, a low base means the differences between high and low notes are more apparent.
-        self.grow_ratio_logarithmic_base = 2
+        
+        self.smallest_to_largest_note_base_ratio_min = 1.0
+        self.smallest_to_largest_note_base_ratio_max = 10.0
+        self.smallest_to_largest_note_base_ratio = 99.0 # Placeholder value
+        self.set_smallest_to_largest_note_base_ratio(0.5)
+        
+        self.smallest_note_radius_min = 2.0
+        self.smallest_note_radius_max = 10.0
+        self.smallest_note_radius = 99.0 # Placeholder value
+        self.set_smallest_note_radius(0.5)
+        
+        self.maximum_grow_velocity_per_s = 10.0
+        
         # The logarithmic base of the size of a shape. High notes are smaller than low notes, a low base means the differences between high and low notes are more apparent.
-        self.shape_ratio = 2
-        self.attack_time = 0.5
-        self.release_time = 0.5
-         
- 
-    def calculate_radius(self, p: Press, shape_ratio: float, grow_ratio_logarithmic_base: float, current_time: float) -> float:
+        self.attack_time_s_min = 0.0
+        self.attack_time_s_max = 1.0
+        self.attack_time_s = 99.0 # Placeholder value
+        self.set_attack_time_s(0.5)
+        
+        self.release_time_s_min = 0.0
+        self.release_time_s_max = 5.0
+        self.release_time_s = 99.0 
+        self.set_release_time_s(0.5)
+    
+    """
+    Size / Growth
+    """
+    def set_smallest_note_radius(self, value: float) -> float:
+        self.smallest_note_radius = ParameterTuner.linear_scale(value, minimum=self.smallest_note_radius_min, maximum=self.smallest_note_radius_max)
+        return self.smallest_note_radius
+
+    def set_smallest_to_largest_note_base_ratio(self, value: float) -> float:
+        self.smallest_to_largest_note_base_ratio = ParameterTuner.linear_scale(value, minimum=self.smallest_to_largest_note_base_ratio_min, maximum=self.smallest_to_largest_note_base_ratio_max)
+        return self.smallest_to_largest_note_base_ratio
+
+    def calculate_grow_velocity_per_s(self, p: Press) -> float:
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return ParameterTuner.linear_scale(v=note_unit, minimum=0.0, maximum=self.maximum_grow_velocity_per_s)
+
+    def calculate_radius(self, p: Press, current_time: float) -> float:
         # If released, stop growing
         dt = p._t_released - p.t if p._t_released else current_time - p.t 
         note = p.note
         note_unit = (109 - note) / 109  # A [0-1) number
-        base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=4, maximum=40)
-        note_growfactor = math.log(p.note, grow_ratio_logarithmic_base)
-        return base_radius + dt * note_growfactor
+        base_radius = ParameterTuner.exponential_scale(v=note_unit, exponent=0.5, minimum=self.smallest_note_radius, maximum=self.smallest_note_radius * self.smallest_to_largest_note_base_ratio)
+        return base_radius + dt * self.calculate_grow_velocity_per_s(p)
 
-    
-    def calculate_color(self, p: Press):
+    """
+    Color
+    """
+    def calculate_hue(self, p: Press) -> float:
+        """
+        This default hue calculation is based on the octave-periodic note value. Returns a [0,1] value.
+        """
+        note_unit = (p.note % NUM_NOTES) / NUM_NOTES
+        return (self.base_hue + note_unit) % 1.0
+
+    def calculate_color(self, p: Press) -> Tuple[int, int, int, int]:
+        """
+        Default color calculation. Returns an RGBA [0,255] value based on the note value.
+        """
         dt = time.time() - p.t    
-        
-        # if p._t_released is None:
-        #     saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
-        #     alpha = saturation # They can be the same
-        # else:
-        #     dtrelease = time.time() - p._t_released
-        #     saturation = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
-        #     alpha = 1 - transition_ease_in(dtrelease / self.release_time) if self.release_time != 0 else 0.0
+        alpha = self.compute_envelope(dt, p._t_released)
+        hue = self.calculate_hue(p)
+        rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]), int(255 * alpha))
+    
+    """
+    Transition
+    """
 
-        
-        x = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
-        
-        if p._t_released is None:
-            saturation = x
-            alpha = x # They can be the same
-            print(f"Gaining: Saturation {saturation} Alpha {alpha}")
+    def set_attack_time_s(self, value: float) -> float:
+        self.attack_time_s = ParameterTuner.linear_scale(value, minimum=self.attack_time_s_min, maximum=self.attack_time_s_max)
+        return self.attack_time_s
+
+    def set_release_time_s(self, value: float) -> float:
+        self.release_time_s = ParameterTuner.linear_scale(value, minimum=self.release_time_s_min, maximum=self.release_time_s_max)
+        return self.release_time_s
+
+    def compute_envelope(self, dt: float, t_released: Optional[float]) -> float:
+        x = transition_ease_in(dt / self.attack_time_s) if self.attack_time_s != 0 else 1.0
+         
+        if t_released is None:
+            return x
         else:
-            time_since_release = time.time() - p._t_released
-            if self.release_time != 0:
-                decay = 1 - transition_ease_out_cubic(time_since_release / self.release_time)
+            time_since_release = time.time() - t_released
+            if self.release_time_s != 0:
+                decay = 1 - transition_ease_out_exponential(time_since_release / self.release_time_s, exponent=5)
             else:
                 decay = 0.0
-            saturation = decay * x
-            alpha = saturation
-            print(f"Decay {decay} Saturation {saturation} Alpha {alpha}")
-            
-        hue = (p.note % NUM_NOTES) / NUM_NOTES
-        rgb = colorsys.hsv_to_rgb(hue, saturation, 1.0)
-        # print(f"Color here: {(int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]), int(255 * alpha))}")
-        return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]), int(255 * alpha))
+            return decay * x
 
+    """
+    Position
+    """
     def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
         # Return the floating point fractional [0,1] within the matrix width and height
         position_x = (hash(p.t) % PRIME_FOR_HASH) / PRIME_FOR_HASH
@@ -100,30 +148,31 @@ class SimpleSustainObject(KeyAwareForm):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         
         if value['type'] == 'control_change' and value['control'] == 14:
-            self.scale = value['value'] / MIDI_DIAL_MAX
+            self.smallest_note_radius = self.set_smallest_note_radius(value['value'] / MIDI_DIAL_MAX)
         elif value['type'] == 'control_change' and value['control'] == 15: 
-            self.grow = value['value'] / 4
+            self.grow_velocity = value['value'] / 4
             log.debug('Grow: {self.grow}')
         elif value['type'] == 'control_change' and value['control'] == 16:
-            self.attack_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
-            self.release_time = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=1.0)
+            self.set_attack_time_s(value['value'] / MIDI_DIAL_MAX)
+            self.set_release_time_s(value['value'] / MIDI_DIAL_MAX)
         elif value['type'] == 'control_change' and value['control'] == 17: 
-            self.shape_ratio = ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, 1, 5)
+            pass
             log.debug('Grow Ratio: {self.grow_ratio}')
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
         super().step(dt) # Ignore super's return value, it's not relevant.
         img = Image.new("RGB", (self.matrix_width, self.matrix_height), (0, 0, 0)) 
+        
         # For whatever reason, to do transparent shapes, we use RGBA draw_context over RGB image
         # https://stackoverflow.com/a/21768191
         draw_context = ImageDraw.Draw(img, "RGBA")
         now = time.time()
         for press in self.presses.values():
-            r = self.calculate_radius(press, self.shape_ratio, self.grow_ratio_logarithmic_base, current_time=now)
+            r = self.calculate_radius(press, current_time=now)
             self.draw_shape(draw_context, press, r)
         del draw_context
-        # Return the vertical flip, origin at the top.
-        return img # img #.convert("RGB") # Required or we get Exception: Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB')
+        
+        return img
 
     @abstractmethod
     def draw_shape(self, draw_context, press: Press, r: float):
@@ -140,6 +189,11 @@ class VerticalNotes(SimpleSustainObject):
         lo = self.x_coords[press.note % NUM_NOTES]
         hi = self.x_coords[press.note % NUM_NOTES + 1] - 1
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
+
+class VerticalNotesFullSpectrum(VerticalNotes):
+    def calculate_hue(self, p: Press) -> float:
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return (self.base_hue + note_unit) % 1.0
 
 class VerticalKeys(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
@@ -173,11 +227,22 @@ class RandomSolidShape(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
-        print(f"Color: {color}")
         num_sides = int(((press.t * 100) % 5) + 3)
         rotation = ((press.t * 1000) % 1000) * 360
         draw_context.regular_polygon((x, y, r), num_sides, rotation=rotation, fill=color, outline=None)
+
+class RandomSolidShapeFullSpectrum(RandomSolidShape):
+    def calculate_hue(self, p: Press) -> float:
+        return p.note / NUM_PIANO_KEYBOARD_KEYS
      
+class RandomSolidShapeFullSpectrumWithEvolvingHue(RandomSolidShape):
+    HUE_INCREMENT = 0.05
+    def midi_handler(self, value: Dict):
+        if is_key_press(value):
+            self.base_hue = (self.base_hue + RandomSolidShapeFullSpectrumWithEvolvingHue.HUE_INCREMENT) % 1.0
+        return super().midi_handler(value)
+        
+
 class RandomText(SimpleSustainObject):
     # TODO Make abstract?
     def select_string(self, press: Press) -> str:
@@ -199,13 +264,15 @@ class RandomText(SimpleSustainObject):
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         elt = self.select_string(press)
-        font_size = clamp(int(self.scale * 32), 4, 32) * 4 # Only divisible by 4
+        color = self.calculate_color(press)
+        # TODO Alpha doesn't work here.
         draw_context.text((x,y), 
             text=elt, 
-            fill=(255, 0, 0), 
+            fill=color, 
             anchor="mm",
-            font=self.font_cache(font_size)
+            font=self.font_cache(int(r))
         )
+    
 
 class RandomWord(RandomText):
     DICTIONARY = get_dictionary("english5000.txt")  

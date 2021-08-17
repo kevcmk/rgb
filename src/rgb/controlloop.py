@@ -1,7 +1,6 @@
 
 import datetime
 from rgb.parameter_tuner import ParameterTuner
-from rgb.utilities import pad
 from rgb.form.baseform import BaseForm
 
 import json
@@ -133,7 +132,7 @@ class ControlLoop():
         if state:
             self.form.cleanup()
             self.form_index = (self.form_index + 1) % len(self.forms)
-        
+    
     def previous_form(self, state):
         if state:
             self.form.cleanup()

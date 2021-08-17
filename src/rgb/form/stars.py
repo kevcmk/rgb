@@ -54,11 +54,7 @@ class Stars(BaseForm):
         super().__init__(dimensions)
         self.population = 256
         self.elts: Set[Elt] = {Elt() for _ in range(self.population)}
-    
-    def midi_handler(self, value: Dict):
-        # TODO
-        pass
-
+        
     def step(self, dt: float):
         self.elts = set(filter(lambda x: x.alive, self.elts))
         self.elts.update([Elt() for _ in range(self.population - len(self.elts))])

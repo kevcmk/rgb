@@ -9,14 +9,7 @@ from rgb.utilities import loopwait
 from rgb.form.basenoise import *
 from rgb.form.cells import *
 from rgb.form.gravity import *
-import time
 
-# if __name__ == "__main__":
-#     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
-#     matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
-#     display = TkCanvas(dimensions=(matrix_width, matrix_height))
-#     rgb2d = ControlLoop(display=display, form=Iconography((matrix_width, matrix_height)))
-#     rgb2d.blocking_loop()
 
 hz = 60
 max_dt = 1 / hz

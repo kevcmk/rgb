@@ -3,7 +3,6 @@ from rgb.form.sustainobject import *
 from rgb.utilities import loopwait
 from rgb.display.tkcanvas import TkCanvas
 from rgb.controlloop import ControlLoop
-from rgb.form.iconography import Iconography
 from rgb.form.basenoise import *
 from rgb.form.cells import *
 from rgb.form.gravity import *
@@ -31,14 +30,14 @@ events = {
     
 }
 
-events = {
-    20: {"type": "note_on", "note": 42, "velocity": 105 },
-    # Sustain note 44 and 45
-    100: {"type": "note_off", "note": 42, "velocity": 105 },
+# events = {
+#     20: {"type": "note_on", "note": 42, "velocity": 105 },
+#     # Sustain note 44 and 45
+#     100: {"type": "note_off", "note": 42, "velocity": 105 },
     
-    # Release note 44 and 45
-    150: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
-}
+#     # Release note 44 and 45
+#     150: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
+# }
 
 event_mod = max(events.keys()) + 1
 
@@ -46,11 +45,11 @@ if __name__ == "__main__":
     matrix_width = int(os.environ.get("MATRIX_WIDTH", 32))
     matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
     display = TkCanvas(dimensions=(matrix_width, matrix_height))
-    f = RandomSolidShape((matrix_width, matrix_height))
+    f = RandomSolidShapeFullSpectrumWithEvolvingHue((matrix_width, matrix_height))
     # f = VerticalKeys((matrix_width, matrix_height))
     i = 0
     t_last = time.time()
-    f.midi_handler({"type": "note_on", "note": 48, "velocity": 105 })
+    # f.midi_handler({"type": "note_on", "note": 48, "velocity": 105 })
     while True:
         i += 1  
         if i % event_mod in events:

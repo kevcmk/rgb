@@ -17,7 +17,7 @@ class Dimensions:
  
 def clamp(x, lower, upper):
     if not lower <= x <= upper:
-        log.warning(f"Input, {x}, outside of acceptable bounds of [{lower}, {upper}]")
+        log.info(f"Input, {x}, outside of acceptable bounds of [{lower}, {upper}]")
         return min(upper, max(lower, x))
     return x
 
@@ -60,18 +60,20 @@ def get_font(font, font_size: int):
             log.debug(f"Could not open {path}, skipping...")
     raise ValueError(f"Could not find font {font} in {RESOURCE_PATHS}")
 
+def is_key_press(m: Dict) -> bool:
+    return m.get('type', None) == 'note_on'
 
-def pad(index: int, m: Dict) -> bool:
-    return m['type'] == 'note_on' and m.get('note', None) == PAD_INDICES[index]
+def is_pad(index: int, m: Dict) -> bool:
+    return m.get('type', None) == 'note_on' and m.get('note', None) == PAD_INDICES[index]
 
 def dial(index: int, m: Dict) -> bool:
-    return m['type'] == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
+    return m.get('type', None) == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
 
 def sustain_on(m: Dict) -> bool:
-    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127 and m.get("channel", None) == 0
+    return m.get('type', None) == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127 and m.get("channel", None) == 0
 
 def sustain_off(m: Dict) -> bool:
-    return m['type'] == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0 and m.get("channel", None) == 0
+    return m.get('type', None) == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0 and m.get("channel", None) == 0
 
 
 """
