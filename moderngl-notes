@@ -1,0 +1,6 @@
+# Install ModernGL
+apt-get install python3-dev
+
+apt-get install libx11-dev
+
+pip install moderngl
