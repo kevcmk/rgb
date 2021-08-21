@@ -74,6 +74,7 @@ class Particles(Example):
             ''',
             geometry_shader='''
             #version 330
+
             layout(points) in;
             layout(points, max_vertices = 1) out;
             uniform float gravity;
@@ -83,11 +84,25 @@ class Particles(Example):
             out vec2 out_pos;
             out vec2 out_vel;
             out vec3 out_color;
+            
+            // Already declared in the vertex shader
+            float rand(float n){return fract(sin(n) * 43758.5453123);}
+
+            
             void main() {
                 vec2 pos = gl_in[0].gl_Position.xy;
                 vec2 velocity = vs_vel[0];
                 if (pos.y > -1.0) {
-                    vec2 vel = velocity + vec2(0.0, gravity);
+                    // This is still on screen
+
+                    vec2 vel;
+                    if (pos.x > -0.5 && pos.x < 0.5) {
+                        vel = velocity + vec2(0.0, gravity + rand(float(vs_vel[0])) * -0.005);
+                    } else {
+                        // Particle has hit a wall
+                        vel = vec2(-velocity.x, velocity.y + gravity + rand(float(vs_vel[0])) * -0.005);
+                    }   
+                        
                     out_pos = pos + vel * ft;
                     out_vel = vel;
                     out_color = vs_color[0];
@@ -100,12 +115,12 @@ class Particles(Example):
         )
         self.mouse_pos = 0, 0
         self.prog['projection'].write(self.projection)
-        self.transform['gravity'].value = -.01  # affects the velocity of the particles over time
-        self.ctx.point_size = self.wnd.pixel_ratio * 2 # point size
+        self.transform['gravity'].value = -.04  # affects the velocity of the particles over time
+        self.ctx.point_size = self.wnd.pixel_ratio * 1 # point size
 
-        self.N = 25_000  # particle count
-        self.active_particles = self.N // 100  # Initial / current number of active particles
-        self.max_emit_count = self.N // 100  # Maximum number of particles to emit per frame
+        self.N = 2500_000  # particle count
+        self.active_particles = self.N // 200  # Initial / current number of active particles
+        self.max_emit_count = self.N // 200  # Maximum number of particles to emit per frame
         self.stride = 28  # byte stride for each vertex
         self.floats = 7
         # Note that passing dynamic=True probably doesn't mean anything to most drivers today
@@ -180,7 +195,7 @@ class Particles(Example):
             float rand(float n){return fract(sin(n) * 43758.5453123);}
             void main() {
                 out_pos = mouse_pos;
-                out_vel = vec2(-1 + 2 * rand(time + gl_VertexID), 0);
+                out_vel = vec2(-0.7 + 1.4 * rand(time + gl_VertexID), rand(time + gl_VertexID) * -0.01);
                 out_color = hsv2rgb(vec3(time, 1.0, 1.0));
             }
             ''',
