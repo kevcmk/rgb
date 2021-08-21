@@ -18,5 +18,4 @@ if __name__ == "__main__":
     context = window.context
     config = context.config
     config.double_buffer
-    import ipdb; ipdb.set_trace()
     pyglet.app.run()

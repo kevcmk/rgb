@@ -9,6 +9,8 @@ runtk:
 	PYTHONPATH="$$(pwd)/src" python src/rgb/maintk.py 
 rungl:
 	PYTHONPATH="$$(pwd)/src" python src/rgb/maingl.py 
+runmoderngl:
+	PYTHONPATH="$$(pwd)/src" python src/rgb/mainmoderngl.py 
 
 build2d:
 	@docker --debug buildx build \
