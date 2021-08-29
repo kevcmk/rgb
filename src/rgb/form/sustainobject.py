@@ -1,27 +1,22 @@
 #!/usr/bin/env python
 
 import colorsys
-from rgb.utilities import clamp
-from rgb.form.keyawareform import KeyAwareForm
-from rgb.parameter_tuner import ParameterTuner
-from rgb.form.transitions import transition_ease_in, transition_ease_out_exponential
-from rgb.form.keyawareform import Press
-from rgb.utilities import get_dictionary
-from rgb.utilities import get_font
 import logging
-import math
 import os
 import time
-from collections import OrderedDict
 from abc import abstractmethod
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple, Union
-from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS, MIDI_DIAL_MAX
+from collections import OrderedDict
+from typing import Dict, Optional, Set, Tuple, Union
 
 import numpy as np
-from rgb.form.baseform import BaseForm
 from PIL import Image, ImageDraw, ImageFont
-from rgb.utilities import is_key_press
+from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS
+from rgb.form.baseform import BaseForm
+from rgb.form.keyawareform import KeyAwareForm, Press
+from rgb.form.transitions import (transition_ease_in,
+                                  transition_ease_out_exponential)
+from rgb.parameter_tuner import ParameterTuner
+from rgb.utilities import clamp, get_dictionary, get_font
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
@@ -35,44 +30,35 @@ class SimpleSustainObject(KeyAwareForm):
 
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        
-        self.base_hue = 0.0
-        
+
         self.presses: OrderedDict[int, Press] = OrderedDict()
-        
-        self.smallest_to_largest_note_base_ratio_min = 1.0
-        self.smallest_to_largest_note_base_ratio_max = 10.0
-        self.smallest_to_largest_note_base_ratio = 99.0 # Placeholder value
-        self.set_smallest_to_largest_note_base_ratio(0.5)
-        
-        self.smallest_note_radius_min = 2.0
-        self.smallest_note_radius_max = 10.0
-        self.smallest_note_radius = 99.0 # Placeholder value
-        self.set_smallest_note_radius(0.5)
-        
-        self.maximum_grow_velocity_per_s = 10.0
-        
-        # The logarithmic base of the size of a shape. High notes are smaller than low notes, a low base means the differences between high and low notes are more apparent.
-        self.attack_time_s_min = 0.0
-        self.attack_time_s_max = 0.0
-        self.attack_time_s = 99.0 # Placeholder value
-        self.set_attack_time_s(0.0)
-        
-        self.release_time_s_min = 0.0
-        self.release_time_s_max = 0.5
-        self.release_time_s = 99.0 
-        self.set_release_time_s(0.1)
+
+        self.smallest_note_radius = 6.0
     
     """
     Size / Growth
     """
-    def set_smallest_note_radius(self, value: float) -> float:
-        self.smallest_note_radius = ParameterTuner.linear_scale(value, minimum=self.smallest_note_radius_min, maximum=self.smallest_note_radius_max)
-        return self.smallest_note_radius
 
-    def set_smallest_to_largest_note_base_ratio(self, value: float) -> float:
-        self.smallest_to_largest_note_base_ratio = ParameterTuner.linear_scale(value, minimum=self.smallest_to_largest_note_base_ratio_min, maximum=self.smallest_to_largest_note_base_ratio_max)
-        return self.smallest_to_largest_note_base_ratio
+    @property
+    def base_hue(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(0), minimum=0, maximum=1.0)
+
+    @property
+    def maximum_grow_velocity_per_s(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0, maximum=10.0)
+    
+    @property
+    def smallest_to_largest_note_base_ratio(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=1.0, maximum=10.0)
+
+    @property
+    def attack_time_s(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(3), minimum=0.0, maximum=0.25)
+    
+    @property
+    def release_time_s(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(3), minimum=0.0, maximum=0.5)
+
 
     def calculate_grow_velocity_per_s(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
@@ -91,7 +77,7 @@ class SimpleSustainObject(KeyAwareForm):
     """
     def calculate_hue(self, p: Press) -> float:
         """
-        This default hue calculation is based on the octave-periodic note value. Returns a [0,1] value.
+        This default hue calculation is based on the octave-periodic note value. Returns a [0,1] value. Shifted by base_hue for synesthetics.
         """
         note_unit = (p.note % NUM_NOTES) / NUM_NOTES
         return (self.base_hue + note_unit) % 1.0
@@ -109,15 +95,6 @@ class SimpleSustainObject(KeyAwareForm):
     """
     Transition
     """
-
-    def set_attack_time_s(self, value: float) -> float:
-        self.attack_time_s = ParameterTuner.linear_scale(value, minimum=self.attack_time_s_min, maximum=self.attack_time_s_max)
-        return self.attack_time_s
-
-    def set_release_time_s(self, value: float) -> float:
-        self.release_time_s = ParameterTuner.linear_scale(value, minimum=self.release_time_s_min, maximum=self.release_time_s_max)
-        return self.release_time_s
-
     def compute_envelope(self, dt: float, t_released: Optional[float]) -> float:
         x = transition_ease_in(dt / self.attack_time_s) if self.attack_time_s != 0 else 1.0
          
@@ -143,22 +120,6 @@ class SimpleSustainObject(KeyAwareForm):
     def calculate_xy_position(self, p: Press) -> Tuple[int, int]:
         fractional_x, fractional_y = self.calculate_xy_fractional_position(p)
         return (int(fractional_x * self.matrix_width), int(fractional_y * self.matrix_height))
-
-    def midi_handler(self, value: Dict):
-        super().midi_handler(value)
-        # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
-        
-        if value['type'] == 'control_change' and value['control'] == 14:
-            self.smallest_note_radius = self.set_smallest_note_radius(value['value'] / MIDI_DIAL_MAX)
-        elif value['type'] == 'control_change' and value['control'] == 15: 
-            self.grow_velocity = value['value'] / 4
-            log.debug('Grow: {self.grow}')
-        elif value['type'] == 'control_change' and value['control'] == 16:
-            self.set_attack_time_s(value['value'] / MIDI_DIAL_MAX)
-            self.set_release_time_s(value['value'] / MIDI_DIAL_MAX)
-        elif value['type'] == 'control_change' and value['control'] == 17: 
-            pass
-            log.debug('Grow Ratio: {self.grow_ratio}')
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
         super().step(dt) # Ignore super's return value, it's not relevant.
@@ -218,7 +179,7 @@ class VerticalWaves(VerticalNotes):
             if 0 <= hi + i < self.matrix_width:
                 draw_context.rectangle((hi + i, 0, hi + i, self.matrix_height), fill=VerticalWaves.modulate_alpha(color, scale))
 
-class VerticalNotesFullSpectrum(VerticalNotes):
+class VerticalNotesSlowSpectrum(VerticalNotes):
     def calculate_hue(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
         return (self.base_hue + note_unit) % 1.0
@@ -259,18 +220,11 @@ class RandomSolidShape(SimpleSustainObject):
         rotation = ((press.t * 1000) % 1000) * 360
         draw_context.regular_polygon((x, y, r), num_sides, rotation=rotation, fill=color, outline=None)
 
-class RandomSolidShapeFullSpectrum(RandomSolidShape):
+class RandomSolidShapeSlowSpectrum(RandomSolidShape):
     def calculate_hue(self, p: Press) -> float:
-        return p.note / NUM_PIANO_KEYBOARD_KEYS
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return (self.base_hue + note_unit) % 1.0
      
-class RandomSolidShapeFullSpectrumWithEvolvingHue(RandomSolidShape):
-    HUE_INCREMENT = 0.05
-    def midi_handler(self, value: Dict):
-        if is_key_press(value):
-            self.base_hue = (self.base_hue + RandomSolidShapeFullSpectrumWithEvolvingHue.HUE_INCREMENT) % 1.0
-        return super().midi_handler(value)
-        
-
 class RandomText(SimpleSustainObject):
     # TODO Make abstract?
     def select_string(self, press: Press) -> str:
@@ -288,6 +242,9 @@ class RandomText(SimpleSustainObject):
         super().__init__(dimensions)
         self.font_name = "DejaVuSans.ttf"
         self._fonts: Dict[int, ImageFont.FreeTypeFont] = dict()
+
+    def calculate_hue(self, p: Press) -> float:
+        return 0.0 # Red
 
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
@@ -322,10 +279,7 @@ class RandomIcon(RandomText):
     SYMBOLS = [c for c in "★✶✢❤︎✕⨳♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"]
     def select_string(self, press: Press) -> str:
         index = hash(press) % len(self.SYMBOLS)
-        return RandomIcon.SYMBOLS[index]
-
-    
-    
+        return RandomIcon.SYMBOLS[index]    
     
 class RandomNumber(RandomText):
     def select_string(self, press: Press) -> str:

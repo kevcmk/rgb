@@ -10,7 +10,7 @@ if __name__ == "__main__":
         # stripes.Stripes(dimensions),
         sustainobject.VerticalWaves(dimensions),
         sustainobject.VerticalNotes(dimensions), 
-        sustainobject.VerticalNotesFullSpectrum(dimensions),
+        sustainobject.VerticalNotesSlowSpectrum(dimensions),
         sustainobject.VerticalKeys(dimensions),
         sustainobject.RandomIcon(dimensions),
         
@@ -19,7 +19,7 @@ if __name__ == "__main__":
         gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
         
         sustainobject.RandomSolidShape(dimensions), 
-        sustainobject.RandomSolidShapeFullSpectrum(dimensions),
+        sustainobject.RandomSolidShapeSlowSpectrum(dimensions),
         sustainobject.RandomIcon(dimensions),
         sustainobject.RandomJapaneseWord(dimensions),
 

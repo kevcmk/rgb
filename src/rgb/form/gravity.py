@@ -137,7 +137,6 @@ class Gravity(KeyAwareForm):
 
     def step(self, dt: float):
         super().step(dt)
-        
         self._birth_particles()
         
         for i, elt in enumerate(self.particles):

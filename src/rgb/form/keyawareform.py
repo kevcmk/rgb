@@ -65,6 +65,7 @@ class KeyAwareForm(BaseForm):
         self.presses = dict()
 
     def midi_handler(self, value: Dict):
+        super().midi_handler(value)
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         if value['type'] == 'note_on':
             note = value['note']
