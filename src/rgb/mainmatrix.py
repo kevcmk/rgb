@@ -8,21 +8,27 @@ if __name__ == "__main__":
         
     forms = (
         # stripes.Stripes(dimensions),
-        voronoi_diagram.VoronoiDiagram(dimensions),
-        voronoi_diagram.ValueVoronoiDiagram(dimensions),
-        voronoi_diagram.RedSaturationVoronoiDiagram(dimensions),
-        voronoi_diagram.RedValueVoronoiDiagram(dimensions),
+        sustainobject.VerticalWaves(dimensions),
         sustainobject.VerticalNotes(dimensions), 
         sustainobject.VerticalNotesFullSpectrum(dimensions),
         sustainobject.VerticalKeys(dimensions),
         sustainobject.RandomIcon(dimensions),
+        
         # gravity.Gravity(dimensions, 0.006), 
         gravity.GravityKeys(dimensions, 0.006), 
         gravity.GravityKeysMultiNozzle(dimensions, 0.006), 
+        
         sustainobject.RandomSolidShape(dimensions), 
         sustainobject.RandomSolidShapeFullSpectrum(dimensions),
         sustainobject.RandomIcon(dimensions),
         sustainobject.RandomJapaneseWord(dimensions),
+
+        voronoi_diagram.VoronoiDiagram(dimensions),
+        voronoi_diagram.ValueVoronoiDiagram(dimensions),
+        voronoi_diagram.RedSaturationVoronoiDiagram(dimensions),
+        voronoi_diagram.RedValueVoronoiDiagram(dimensions),
+        voronoi_diagram.SparseRedValueVoronoiDiagram(dimensions),
+        
         # sustainobject.RandomWord(dimensions),
         # sustainobject.RandomNumber(dimensions),
         # randomobject.RandomOutlineShape(dimensions), 

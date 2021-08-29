@@ -44,6 +44,7 @@ class KeyAwareForm(BaseForm):
     @staticmethod
     def is_expired(v, expire_after_s: float) -> bool:
         return v._t_released is not None and time.time() - v._t_released > expire_after_s
+    
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         self.presses: Dict[str, Press] = dict()
@@ -53,7 +54,7 @@ class KeyAwareForm(BaseForm):
 
     def step(self, time_delta: float):
         self.prune_presses_dictionary()
-        super().step(time_delta)
+        return super().step(time_delta)
 
     def prune_presses_dictionary(self, expire_after_s: float = 1):
         if self.sustain:
@@ -65,7 +66,6 @@ class KeyAwareForm(BaseForm):
 
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
-        log.info(value)
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX

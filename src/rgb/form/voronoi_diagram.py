@@ -97,7 +97,7 @@ class VoronoiDiagram(SimpleSustainObject):
 class ValueVoronoiDiagram(VoronoiDiagram):
     def calculate_color(self, p: Press):
         dt = time.time() - p.t 
-        x = transition_ease_in(dt / self.attack_time) if self.attack_time != 0 else 1.0
+        x = transition_ease_in(dt / self.attack_time_s) if self.attack_time_s != 0 else 1.0
         hue = (p.note % NUM_NOTES) / NUM_NOTES
         rgb = colorsys.hsv_to_rgb(hue, 1.0, x)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
@@ -107,13 +107,6 @@ class RedSaturationVoronoiDiagram(VoronoiDiagram):
         v = (p.note % NUM_NOTES) / NUM_NOTES
         rgb = colorsys.hsv_to_rgb(1, v, 1.0)
         return (int(255 * rgb[0]), int(255 * rgb[1]), int(255 * rgb[2]))
-
-
-class RedStationarySaturationVoronoiDiagram(RedSaturationVoronoiDiagram):
-    def calculate_xy_fractional_position(self, p: Press) -> Tuple[float, float]:
-        x = 0.5
-        y = (p.note % NUM_NOTES) / NUM_NOTES
-        return (x,y)
 
 class RedValueVoronoiDiagram(VoronoiDiagram):
     def calculate_color(self, p: Press):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import colorsys
+from rgb.utilities import clamp
 from rgb.form.keyawareform import KeyAwareForm
 from rgb.parameter_tuner import ParameterTuner
 from rgb.form.transitions import transition_ease_in, transition_ease_out_exponential
@@ -53,14 +54,14 @@ class SimpleSustainObject(KeyAwareForm):
         
         # The logarithmic base of the size of a shape. High notes are smaller than low notes, a low base means the differences between high and low notes are more apparent.
         self.attack_time_s_min = 0.0
-        self.attack_time_s_max = 1.0
+        self.attack_time_s_max = 0.0
         self.attack_time_s = 99.0 # Placeholder value
-        self.set_attack_time_s(0.5)
+        self.set_attack_time_s(0.0)
         
         self.release_time_s_min = 0.0
-        self.release_time_s_max = 5.0
+        self.release_time_s_max = 0.5
         self.release_time_s = 99.0 
-        self.set_release_time_s(0.5)
+        self.set_release_time_s(0.1)
     
     """
     Size / Growth
@@ -190,6 +191,33 @@ class VerticalNotes(SimpleSustainObject):
         hi = self.x_coords[press.note % NUM_NOTES + 1] - 1
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
+class VerticalWaves(VerticalNotes):
+    def __init__(self, dimensions: Tuple[int, int]):
+        super().__init__(dimensions)
+        # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
+        self.x_coords = np.linspace(0, self.matrix_width, NUM_NOTES + 1, dtype=np.uint8)
+        self.wave_width = 4
+
+    @staticmethod
+    def modulate_alpha(c: Tuple[int, int, int, int], factor: float) -> Tuple[int, int, int, int]:
+        return (c[0], c[1], c[2], clamp(int(factor * c[3]), 0, 255))
+
+    def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
+        color = self.calculate_color(press)
+        lo = self.x_coords[press.note % NUM_NOTES]
+        hi = self.x_coords[press.note % NUM_NOTES + 1] - 1
+        draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
+        # print(r // 8)
+        max_wave_width = int(r / 4)
+        for i in range(max_wave_width):
+            # Don't worry, this works. Tuple4 is acceptable.
+            scale = ParameterTuner.exponential_scale((i+1) / max_wave_width, 0.5, 1.0, 0.0)
+            print(scale)
+            if 0 <= lo - i < self.matrix_width:
+                draw_context.rectangle((lo - i , 0, lo - i, self.matrix_height), fill=VerticalWaves.modulate_alpha(color, scale))
+            if 0 <= hi + i < self.matrix_width:
+                draw_context.rectangle((hi + i, 0, hi + i, self.matrix_height), fill=VerticalWaves.modulate_alpha(color, scale))
+
 class VerticalNotesFullSpectrum(VerticalNotes):
     def calculate_hue(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
@@ -295,6 +323,8 @@ class RandomIcon(RandomText):
     def select_string(self, press: Press) -> str:
         index = hash(press) % len(self.SYMBOLS)
         return RandomIcon.SYMBOLS[index]
+
+    
     
     
 class RandomNumber(RandomText):

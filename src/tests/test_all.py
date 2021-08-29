@@ -9,6 +9,7 @@ from rgb.utilities import loopwait
 from rgb.form.basenoise import *
 from rgb.form.cells import *
 from rgb.form.gravity import *
+from rgb.form.voronoi_diagram import *
 
 
 hz = 60
@@ -48,6 +49,11 @@ def drive_event_loop_through_form(f: BaseForm):
 
 @pytest.mark.parametrize("form", [RandomOutlineCircle, RandomOutlineShape, RandomSolidShape, VerticalNotes, VerticalKeys, RandomWord, RandomJapaneseWord, RandomNumber, RandomIcon])
 def test_sustainobject(form):
+    f = form((matrix_width, matrix_height))
+    drive_event_loop_through_form(f)
+
+@pytest.mark.parametrize("form", [VoronoiDiagram, ValueVoronoiDiagram, RedValueVoronoiDiagram, RedValueVoronoiDiagram, SparseRedValueVoronoiDiagram])
+def test_voronoi(form):
     f = form((matrix_width, matrix_height))
     drive_event_loop_through_form(f)
 
