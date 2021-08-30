@@ -10,7 +10,7 @@ from multiprocessing import connection
 import os
 import time
 from json.decoder import JSONDecodeError
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, Optional
 
 from rgb.imaqt import IMAQT
 from rgb.display.basedisplay import BaseDisplay
@@ -23,7 +23,7 @@ logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 class ControlLoop():
 
-    def __init__(self, display: BaseDisplay, forms: List[BaseForm]):
+    def __init__(self, display: BaseDisplay, forms: Iterable[BaseForm]):
         self.max_hz = 60
         self.display = display
 

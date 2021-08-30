@@ -1,40 +1,38 @@
 import os
-from rgb.form.sustainobject import *
+from rgb.form.sustainobject import VerticalWaves
 from rgb.utilities import loopwait
 from rgb.display.tkcanvas import TkCanvas
-from rgb.controlloop import ControlLoop
-from rgb.form.basenoise import *
-from rgb.form.cells import *
-from rgb.form.gravity import *
-from rgb.form.voronoi_diagram import *
 import time
 
 hz = 60
 max_dt = 1 / hz
 
 events = {
-    20: {"type": "note_on", "note": 42, "velocity": 105 },
-    30: {"type": "note_on", "note": 45, "velocity": 105 },
+    20: {"type": "note_on", "note": 42, "velocity": 105},
+    30: {"type": "note_on", "note": 45, "velocity": 105},
     # Sustain note 44 and 45
-    35: {"type": "control_change", "time": 0, "control": 64, "value": 127, "channel": 0},
-    40: {"type": "note_on", "note": 48, "velocity": 105 },
-    50: {"type": "note_on", "note": 51, "velocity": 105 },
-    90: {"type": "note_off", "note": 42, "velocity": 105 },
-    100: {"type": "note_off", "note": 45, "velocity": 105 },
-    
+    35: {
+        "type": "control_change",
+        "time": 0,
+        "control": 64,
+        "value": 127,
+        "channel": 0,
+    },
+    40: {"type": "note_on", "note": 48, "velocity": 105},
+    50: {"type": "note_on", "note": 51, "velocity": 105},
+    90: {"type": "note_off", "note": 42, "velocity": 105},
+    100: {"type": "note_off", "note": 45, "velocity": 105},
     # Release note 44 and 45
     105: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
-
-    110: {"type": "note_off", "note": 51, "velocity": 105 },
-    120: {"type": "note_off", "note": 48, "velocity": 105 },
-    
+    110: {"type": "note_off", "note": 51, "velocity": 105},
+    120: {"type": "note_off", "note": 48, "velocity": 105},
 }
 
 # events = {
 #     20: {"type": "note_on", "note": 42, "velocity": 105 },
 #     # Sustain note 44 and 45
 #     100: {"type": "note_off", "note": 42, "velocity": 105 },
-    
+
 #     # Release note 44 and 45
 #     150: {"type": "control_change", "time": 0, "control": 64, "value": 0, "channel": 0},
 # }
@@ -51,7 +49,7 @@ if __name__ == "__main__":
     t_last = time.time()
     # f.midi_handler({"type": "note_on", "note": 48, "velocity": 105 })
     while True:
-        i += 1  
+        i += 1
         if i % event_mod in events:
             event = events[i % event_mod]
             f.midi_handler(event)
