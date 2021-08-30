@@ -36,7 +36,7 @@ class VoronoiDiagram(SimpleSustainObject):
         
         input_vertices = self.get_base_point_array_list(np.array(list(a)))
         # Also include companion points to intoduce sparsity
-        companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=self.num_companion_points) for p in self.presses.values()]))
+        companion_points_units = list(chain.from_iterable([VoronoiDiagram.get_press_companion_points(p, count=self.num_companion_points) for p in self.presses().values()]))
         companion_points_coordinates = self.companion_points_to_coordinates(companion_points_units)
         concatenated = np.concatenate((input_vertices, companion_points_coordinates), axis=0) if companion_points_coordinates else input_vertices
         v: Voronoi = Voronoi(concatenated)
@@ -81,10 +81,10 @@ class VoronoiDiagram(SimpleSustainObject):
             self.num_companion_points = int(ParameterTuner.linear_scale(value['value'] / MIDI_DIAL_MAX, minimum=0, maximum=6))
 
     def step(self, dt: float) -> Union[Image.Image, np.ndarray]:
-        arr = tuple(self.calculate_xy_position(x) for x in self.presses.values())
+        arr = tuple(self.calculate_xy_position(x) for x in self.presses().values())
         polygon_results = self.get_polygons(arr)
         self.polygon_coordinate_map = {}
-        for key, polygon in zip(self.presses.keys(), polygon_results):
+        for key, polygon in zip(self.presses().keys(), polygon_results):
             self.polygon_coordinate_map[key] = polygon
         return super().step(dt)
         

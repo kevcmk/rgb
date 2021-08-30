@@ -31,8 +31,6 @@ class SimpleSustainObject(KeyAwareForm):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
 
-        self.presses: OrderedDict[int, Press] = OrderedDict()
-
         self.smallest_note_radius = 6.0
     
     """
@@ -129,7 +127,7 @@ class SimpleSustainObject(KeyAwareForm):
         # https://stackoverflow.com/a/21768191
         draw_context = ImageDraw.Draw(img, "RGBA")
         now = time.time()
-        for press in self.presses.values():
+        for press in self.presses().values():
             r = self.calculate_radius(press, current_time=now)
             self.draw_shape(draw_context, press, r)
         del draw_context

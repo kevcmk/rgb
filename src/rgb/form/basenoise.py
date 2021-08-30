@@ -25,7 +25,6 @@ class BaseNoise(BaseForm):
     NOISE_FUNCTIONS = [pnoise3, snoise3]
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.presses = dict()
 
         self.noise_function_index = 0
         self.scale = 1 / 36.0 # 1/48, [0.1, 10]
@@ -99,9 +98,9 @@ class NoiseKey(BaseNoise, KeyAwareForm):
         
     def step(self, dt) -> Union[Image.Image, np.ndarray]:
         time_elapsed = time.time() - self.t_start
-        notespace = np.zeros((len(self.presses), self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
+        notespace = np.zeros((len(self.presses()), self.matrix_height, self.matrix_width, 3), dtype=np.uint8)
         xs = np.linspace(start=0, stop=self.matrix_width, num=NUM_NOTES + 1, endpoint=True, dtype=np.uint8)
-        for index, v in enumerate(self.presses.values()):
+        for index, v in enumerate(self.presses().values()):
             note_index = v.note % NUM_NOTES
             hue = note_index / NUM_NOTES
             lo = xs[note_index]

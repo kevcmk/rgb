@@ -54,7 +54,7 @@ class Cells(KeyAwareForm):
         #         intensities[i,j] = normalized_noise
         #         res[i,j,:] = hsv_to_pixel(0, 0, normalized_noise)
         
-        for v in self.presses.values():
+        for v in self.presses().values():
             x_index = hash(v.t) % self.practical_width
             y_index = hash(v.t * 2) % self.practical_height
             index = v.note % NUM_NOTES

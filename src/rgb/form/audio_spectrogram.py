@@ -36,7 +36,6 @@ class AudioSpectrogram(BaseForm):
     def __init__(self, dimensions: Tuple[int, int]):
         self.decay_per_s = 2.0
         (self.matrix_width, self.matrix_height) = dimensions
-        self.presses = dict()
         self.last_observed_lo_dial = 0
         self.last_observed_hi_dial = 127
         self.gain = 1.0

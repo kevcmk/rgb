@@ -199,7 +199,7 @@ class GravityKeys(Gravity):
         if room <= 0:
             return
         births = random.randint(0, room) // 10
-        for key in self.presses.values():
+        for key in self.presses().values():
             for _ in range(int(births)):
                 self.particles.add(self.particle_from_keypress(key))
 

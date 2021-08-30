@@ -47,10 +47,16 @@ class KeyAwareForm(BaseForm):
     
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        self.presses: Dict[str, Press] = dict()
+        self._presses: Dict[str, Press] = dict()
         
         # None means sustain is off.
         self.sustain: bool = False
+
+    def presses(self, include_released: bool = False) -> Dict[str, Press]:
+        if include_released:
+            return self._presses
+        else:
+            return {k: p for k, p in self._presses.items() if p._t_released is None}
 
     def step(self, time_delta: float):
         self.prune_presses_dictionary()
@@ -59,10 +65,10 @@ class KeyAwareForm(BaseForm):
     def prune_presses_dictionary(self, expire_after_s: float = 1):
         if self.sustain:
             return
-        self.presses = {k:v for k,v in self.presses.items() if not KeyAwareForm.is_expired(v, expire_after_s)}
+        self._presses = {k:v for k,v in self._presses.items() if not KeyAwareForm.is_expired(v, expire_after_s)}
         
     def cleanup(self):
-        self.presses = dict()
+        self._presses = dict()
 
     def midi_handler(self, value: Dict):
         super().midi_handler(value)
@@ -70,12 +76,12 @@ class KeyAwareForm(BaseForm):
         if value['type'] == 'note_on':
             note = value['note']
             velocity = value['velocity'] / MIDI_DIAL_MAX
-            self.presses[note] = Press(note=note, velocity=velocity, t=time.time())
+            self._presses[note] = Press(note=note, velocity=velocity, t=time.time())
         elif value['type'] == 'note_off':
             note = value['note']
             # If it is sustained, it will be deleted by the sustain off event.
-            if note in self.presses:
-                self.presses[note]._t_released = time.time()
+            if note in self.presses():
+                self._presses[note]._t_released = time.time()
             else:
                 log.warning(f"Note off event for note {note} without a corresponding note in self.presses.")
         elif sustain_on(value):
