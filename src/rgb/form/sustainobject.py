@@ -141,7 +141,7 @@ class SimpleSustainObject(KeyAwareForm):
 class VerticalNotes(SimpleSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
-        # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
+        # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1])
         self.x_coords = np.linspace(0, self.matrix_width, NUM_NOTES + 1, dtype=np.uint8)
 
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
