@@ -14,22 +14,31 @@ log = logging.getLogger(__name__)
 class Dimensions:
     width: int
     height: int
- 
+
+
+# Take a color and return a color with an alpha scaled by the given factor
+def modulate_alpha(c: Tuple[int, int, int, int], factor: float) -> Tuple[int, int, int, int]:
+    return (c[0], c[1], c[2], clamp(int(factor * c[3]), 0, 255))
+
+
 def clamp(x, lower, upper):
     if not lower <= x <= upper:
         log.info(f"Input, {x}, outside of acceptable bounds of [{lower}, {upper}]")
         return min(upper, max(lower, x))
     return x
 
+
 clamped_add = lambda x, y: min(1.0, x + y)
 clamped_subtract = lambda x, y: max(0.0, x - y)
 
-def hsv_to_pixel(h: float, s: float, v: float) -> Tuple[np.uint8,np.uint8,np.uint8]:
+
+def hsv_to_pixel(h: float, s: float, v: float) -> Tuple[np.uint8, np.uint8, np.uint8]:
     rgb = colorsys.hsv_to_rgb(h, s, v)
     return (np.uint8(rgb[0] * 255), np.uint8(rgb[1] * 255), np.uint8(rgb[2] * 255))
 
+
 def loopwait(t_last: float, max_dt: float):
-    # Respecting max_dt, wait for up to 
+    # Respecting max_dt, wait for up to
     now = time.time()
     total_elapsed_since_last_frame = now - t_last
     t_last, wait_time = now, max_dt - total_elapsed_since_last_frame
@@ -39,19 +48,23 @@ def loopwait(t_last: float, max_dt: float):
         time.sleep(wait_time)
     return now, total_elapsed_since_last_frame
 
+
 RESOURCE_PATHS = ["src/rgb/resources/", "rgb/resources/"]
+
+
 def get_dictionary(name: str) -> List[str]:
     for base in RESOURCE_PATHS:
         path = f"{base}{name}"
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 return f.readlines()
         except OSError:
             log.debug(f"Could not open {path}, skipping...")
     raise ValueError(f"Could not find {name} in {RESOURCE_PATHS}")
 
+
 def get_font(font, font_size: int):
-    
+
     for base in RESOURCE_PATHS:
         path = f"{base}{font}"
         try:
@@ -60,20 +73,35 @@ def get_font(font, font_size: int):
             log.debug(f"Could not open {path}, skipping...")
     raise ValueError(f"Could not find font {font} in {RESOURCE_PATHS}")
 
+
 def is_key_press(m: Dict) -> bool:
-    return m.get('type', None) == 'note_on'
+    return m.get("type", None) == "note_on"
+
 
 def is_pad(index: int, m: Dict) -> bool:
-    return m.get('type', None) == 'note_on' and m.get('note', None) == PAD_INDICES[index]
+    return m.get("type", None) == "note_on" and m.get("note", None) == PAD_INDICES[index]
+
 
 def dial(index: int, m: Dict) -> bool:
-    return m.get('type', None) == 'control_change' and m.get('control', None) == DIAL_INDICES[index]
+    return m.get("type", None) == "control_change" and m.get("control", None) == DIAL_INDICES[index]
+
 
 def sustain_on(m: Dict) -> bool:
-    return m.get('type', None) == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 127 and m.get("channel", None) == 0
+    return (
+        m.get("type", None) == "control_change"
+        and m.get("control", None) == 64
+        and m.get("value", None) == 127
+        and m.get("channel", None) == 0
+    )
+
 
 def sustain_off(m: Dict) -> bool:
-    return m.get('type', None) == 'control_change' and m.get('control', None) == 64 and m.get('value', None) == 0 and m.get("channel", None) == 0
+    return (
+        m.get("type", None) == "control_change"
+        and m.get("control", None) == 64
+        and m.get("value", None) == 0
+        and m.get("channel", None) == 0
+    )
 
 
 """
@@ -92,5 +120,3 @@ def sustain_off(m: Dict) -> bool:
 2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 1, 0], "midi_read_time": "2021-07-28 18:05:58.279284"}
 2021-07-28T11:05:57-0700 vmini {"type": "sysex", "time": 0, "data": [0, 32, 84, 38, 9, 2, 0], "midi_read_time": "2021-07-28 18:05:58.280181"}
 """
-
-

@@ -3,6 +3,7 @@ import os
 from rgb.controlloop import ControlLoop
 from rgb.display.hzelmatrix import HzelMatrix
 from rgb.form import gravity, sustainobject, voronoi_diagram
+from rgb.form.stars import Stars
 
 if __name__ == "__main__":
     dimensions = (
@@ -11,6 +12,7 @@ if __name__ == "__main__":
     )
 
     forms = (
+        
         # stripes.Stripes(dimensions),
         sustainobject.VerticalWaves(dimensions),
         sustainobject.VerticalNotes(dimensions),
@@ -20,16 +22,19 @@ if __name__ == "__main__":
         # gravity.Gravity(dimensions, 0.006),
         gravity.GravityKeys(dimensions, 0.006),
         gravity.GravityKeysMultiNozzle(dimensions, 0.006),
+        sustainobject.RandomWaveShape(dimensions),
         sustainobject.RandomSolidShape(dimensions),
         sustainobject.RandomSolidShapeSlowSpectrum(dimensions),
         sustainobject.RandomIcon(dimensions),
+        sustainobject.RandomWord(dimensions),
         sustainobject.RandomJapaneseWord(dimensions),
+        sustainobject.TextStars(dimensions),
+        sustainobject.TextSparkles(dimensions),
         voronoi_diagram.VoronoiDiagram(dimensions),
         voronoi_diagram.ValueVoronoiDiagram(dimensions),
         voronoi_diagram.RedSaturationVoronoiDiagram(dimensions),
         voronoi_diagram.RedValueVoronoiDiagram(dimensions),
         voronoi_diagram.SparseRedValueVoronoiDiagram(dimensions),
-        # sustainobject.RandomWord(dimensions),
         # sustainobject.RandomNumber(dimensions),
         # randomobject.RandomOutlineShape(dimensions),
         # randomobject.RandomOutlineCircle(dimensions),

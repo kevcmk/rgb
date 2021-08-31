@@ -1,6 +1,8 @@
 import os
 import sys
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pytest
 from rgb.form.baseform import BaseForm
 from rgb.form.gravity import Gravity, GravityKeys, GravityKeysMultiNozzle
@@ -12,9 +14,13 @@ from rgb.form.sustainobject import (
     RandomOutlineCircle,
     RandomOutlineShape,
     RandomSolidShape,
+    RandomWaveShape,
     RandomWord,
+    TextSparkles,
+    TextStars,
     VerticalKeys,
     VerticalNotes,
+    VerticalWaves,
 )
 from rgb.form.voronoi_diagram import (
     RedValueVoronoiDiagram,
@@ -23,7 +29,6 @@ from rgb.form.voronoi_diagram import (
     VoronoiDiagram,
 )
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 hz = 60
 max_dt = 1 / hz
@@ -78,12 +83,16 @@ def drive_event_loop_through_form(f: BaseForm):
         RandomOutlineCircle,
         RandomOutlineShape,
         RandomSolidShape,
+        RandomWaveShape,
         VerticalNotes,
         VerticalKeys,
+        VerticalWaves,
         RandomWord,
         RandomJapaneseWord,
         RandomNumber,
         RandomIcon,
+        TextSparkles,
+        TextStars,
     ],
 )
 def test_sustainobject(form):

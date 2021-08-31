@@ -4,7 +4,7 @@ import colorsys
 import logging
 import os
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
@@ -12,14 +12,29 @@ from PIL import Image, ImageDraw, ImageFont
 from rgb.constants import NUM_NOTES, NUM_PIANO_KEYBOARD_KEYS
 from rgb.form.baseform import BaseForm
 from rgb.form.keyawareform import KeyAwareForm, Press
-from rgb.form.transitions import transition_ease_in, transition_ease_out_exponential
+from rgb.form.transitions import transition_ease_out_exponential
 from rgb.parameter_tuner import ParameterTuner
-from rgb.utilities import clamp, get_dictionary, get_font
+from rgb.utilities import get_dictionary, get_font, modulate_alpha
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 PRIME_FOR_HASH = 5021
+
+
+def compute_envelope(dt: float, dt_released: Optional[float], attack_time_s: float, release_time_s: float) -> float:
+    # Ease out exponential 3 on attack means aggressive entrance (60% after 0.25, 85% after 0.5)
+    x = transition_ease_out_exponential(dt / attack_time_s, exponent=6) if attack_time_s != 0 else 1.0
+
+    if dt_released is None:
+        return x
+    else:
+        time_since_release = dt_released
+        if release_time_s != 0:
+            decay = 1 - transition_ease_out_exponential(time_since_release / release_time_s, exponent=5)
+        else:
+            decay = 0.0
+        return decay * x
 
 
 class SimpleSustainObject(KeyAwareForm):
@@ -38,19 +53,22 @@ class SimpleSustainObject(KeyAwareForm):
 
     @property
     def base_hue(self) -> float:
+        # Why + 0.5 % 1.0 ? So we default rojo for dial 0.5.
         return ParameterTuner.linear_scale(BaseForm.dials(0), minimum=0, maximum=1.0)
 
     @property
+    def attack_time_s(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0.0, maximum=0.1)
+
+    @property
     def maximum_grow_velocity_per_s(self) -> float:
-        return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0, maximum=10.0)
+        # return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0, maximum=10.0)
+        return 5.0
 
     @property
     def smallest_to_largest_note_base_ratio(self) -> float:
-        return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=1.0, maximum=10.0)
-
-    @property
-    def attack_time_s(self) -> float:
-        return ParameterTuner.linear_scale(BaseForm.dials(3), minimum=0.0, maximum=0.25)
+        # return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=1.0, maximum=10.0)
+        return 0.5
 
     @property
     def release_time_s(self) -> float:
@@ -90,7 +108,8 @@ class SimpleSustainObject(KeyAwareForm):
         Default color calculation. Returns an RGBA [0,255] value based on the note value.
         """
         dt = time.time() - p.t
-        alpha = self.compute_envelope(dt, p._t_released)
+        dt_released = time.time() - p._t_released if p._t_released else None
+        alpha = compute_envelope(dt, dt_released, self.attack_time_s, self.release_time_s)
         hue = self.calculate_hue(p)
         rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
         return (
@@ -99,23 +118,6 @@ class SimpleSustainObject(KeyAwareForm):
             int(255 * rgb[2]),
             int(255 * alpha),
         )
-
-    """
-    Transition
-    """
-
-    def compute_envelope(self, dt: float, t_released: Optional[float]) -> float:
-        x = transition_ease_in(dt / self.attack_time_s) if self.attack_time_s != 0 else 1.0
-
-        if t_released is None:
-            return x
-        else:
-            time_since_release = time.time() - t_released
-            if self.release_time_s != 0:
-                decay = 1 - transition_ease_out_exponential(time_since_release / self.release_time_s, exponent=5)
-            else:
-                decay = 0.0
-            return decay * x
 
     """
     Position
@@ -167,37 +169,76 @@ class VerticalNotes(SimpleSustainObject):
         draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
 
 
-class VerticalWaves(VerticalNotes):
+class WaveSustainObject(SimpleSustainObject, ABC):
+    # This must be mixed in to a concrete SimpleSustainObject
+
+    @property
+    def max_wave_width(self) -> int:
+        return int(self.matrix_width * BaseForm.dials(2))
+
+    @property
+    def wave_attack_time(self) -> float:
+        # Wave attack time is a fraction of the shape's attack time
+        return BaseForm.dials(3) * self.attack_time_s
+
+    @property
+    def wave_release_time(self) -> float:
+        # Wave Release time is a fraction of the shape's attack time
+        return BaseForm.dials(3) * self.release_time_s
+
+    def wave_scale(self, i: int, dt: float, dt_released: Optional[float]):
+        compute_envelope(dt, dt_released, self.wave_attack_time, self.wave_release_time)
+        return ParameterTuner.exponential_scale(i / self.max_wave_width, 0.5, 1.0, 0.0)
+
+
+class RandomWaveShape(WaveSustainObject):
+    def calculate_radius(self, p: Press, current_time: float) -> float:
+        return super().calculate_radius(p, current_time) / 2
+        
+    def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
+        (x, y) = self.calculate_xy_position(press)
+        color = self.calculate_color(press)
+        num_sides = int(((press.t * 100) % 5) + 3)
+        rotation = ((press.t * 1000) % 1000) * 360
+
+        dt = time.time() - press.t
+        dt_released = time.time() - press._t_released if press._t_released else None
+
+        for i in range(self.max_wave_width):
+            # Don't worry, this works. Tuple4 is acceptable.
+            scale = self.wave_scale(i=i, dt=dt, dt_released=dt_released)
+            draw_context.regular_polygon(
+                (x, y, r + i), num_sides, rotation=rotation, fill=modulate_alpha(color, scale), outline=None
+            )
+
+
+class VerticalWaves(WaveSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
         # 0 until 1 before matrix_width, num keys + 1 steps (because we index [i,i+1]
         self.x_coords = np.linspace(0, self.matrix_width, NUM_NOTES + 1, dtype=np.uint8)
-        self.wave_width = 4
-
-    @staticmethod
-    def modulate_alpha(c: Tuple[int, int, int, int], factor: float) -> Tuple[int, int, int, int]:
-        return (c[0], c[1], c[2], clamp(int(factor * c[3]), 0, 255))
 
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         color = self.calculate_color(press)
         lo = self.x_coords[press.note % NUM_NOTES]
         hi = self.x_coords[press.note % NUM_NOTES + 1] - 1
-        draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
-        # print(r // 8)
-        max_wave_width = int(r / 4)
-        for i in range(max_wave_width):
-            # Don't worry, this works. Tuple4 is acceptable.
-            scale = ParameterTuner.exponential_scale((i + 1) / max_wave_width, 0.5, 1.0, 0.0)
-            print(scale)
+        # draw_context.rectangle((lo, 0, hi, self.matrix_height), fill=color)
+
+        dt = time.time() - press.t
+        dt_released = time.time() - press._t_released if press._t_released else None
+
+        for i in range(self.max_wave_width):
+            scale = self.wave_scale(i, dt=dt, dt_released=dt_released)
+
             if 0 <= lo - i < self.matrix_width:
                 draw_context.rectangle(
                     (lo - i, 0, lo - i, self.matrix_height),
-                    fill=VerticalWaves.modulate_alpha(color, scale),
+                    fill=modulate_alpha(color, scale),  # Don't worry, this works. Tuple4 is acceptable.
                 )
             if 0 <= hi + i < self.matrix_width:
                 draw_context.rectangle(
                     (hi + i, 0, hi + i, self.matrix_height),
-                    fill=VerticalWaves.modulate_alpha(color, scale),
+                    fill=modulate_alpha(color, scale),  # Don't worry, this works. Tuple4 is acceptable.
                 )
 
 
@@ -272,7 +313,10 @@ class RandomText(SimpleSustainObject):
         self._fonts: Dict[int, ImageFont.FreeTypeFont] = dict()
 
     def calculate_hue(self, p: Press) -> float:
-        return 0.0  # Red
+        return self.base_hue  # Use base hue
+
+    def calculate_grow_velocity_per_s(self, p: Press) -> float:
+        return 0.0  # Don't grow
 
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
@@ -303,11 +347,29 @@ class RandomJapaneseWord(RandomText):
 
 
 class RandomIcon(RandomText):
-    SYMBOLS = [c for c in "★✶✢❤︎✕⨳♚♛♜♝♞♟♔♕♖♗♘♙♈︎♉︎♊︎♋︎♌︎♍︎♎︎♏︎♐︎♑︎♒︎♓︎☉☿♀︎♁♂︎♃♄♅♆⚕︎⚚☯︎⚘✦✧⚡︎"]
+    random = "★☆※ɵӿ†⁂⁃⁙⁜∮∧∨⋇⋆⌬☀⚕︎⚚☯︎⚘✦✧Ɣжѻ"
+    planets = "☿♀♁♂♃♄♅♆♇"
+    horoscope = "♈♉♊♋♌♍♎♏♐♑♒♓"
+    cards = "♠♤♥♡♣♧♦♢"
+    SYMBOLS = [c for c in random + planets + horoscope + cards]
+
+    # "𐌊𐌄𐌞𐌉𐌍 𐌊𐌀𐌕"
 
     def select_string(self, press: Press) -> str:
-        index = hash(press) % len(self.SYMBOLS)
-        return RandomIcon.SYMBOLS[index]
+        # index = hash(press) % len(self.SYMBOLS)
+        # return RandomIcon.SYMBOLS[index]
+        return RandomIcon.random
+
+
+class TextSparkles(RandomText):
+    def select_string(self, press: Press) -> str:
+        return "✦"
+
+class TextStars(RandomText):
+    SYMBOLS = "★☆"
+
+    def select_string(self, press: Press) -> str:
+        return TextStars.SYMBOLS[hash(press) % len(self.SYMBOLS)]
 
 
 class RandomNumber(RandomText):
