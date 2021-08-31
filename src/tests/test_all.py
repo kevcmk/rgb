@@ -1,5 +1,7 @@
+import itertools
 import os
 import sys
+from typing import Dict
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -29,9 +31,13 @@ from rgb.form.voronoi_diagram import (
     VoronoiDiagram,
 )
 
-
 hz = 60
 max_dt = 1 / hz
+
+
+def generate_control_change(control: int, value: float) -> Dict:
+    return {"type": "control_change", "control": control, "value": value}
+
 
 events = {
     20: {"type": "note_on", "note": 42, "velocity": 105},
@@ -69,7 +75,11 @@ matrix_height = int(os.environ.get("MATRIX_HEIGHT", 64))
 
 
 def drive_event_loop_through_form(f: BaseForm):
-    for _ in range(2):
+    for control_value in (0.0, 0.5, 1.0):
+        for control in range(8):  # Set all dials to control_value
+            dial_event = generate_control_change(control, control_value)
+            f.midi_handler(dial_event)
+
         for i, event in enumerate(sorted_events):
             dt = sorted_events[i] - sorted_events[i - 1] if i > 0 else sorted_events[i]
             if events[event] is not None:
@@ -93,23 +103,13 @@ def drive_event_loop_through_form(f: BaseForm):
         RandomIcon,
         TextSparkles,
         TextStars,
-    ],
-)
-def test_sustainobject(form):
-    f = form((matrix_width, matrix_height))
-    drive_event_loop_through_form(f)
-
-
-@pytest.mark.parametrize(
-    "form",
-    [
         VoronoiDiagram,
         ValueVoronoiDiagram,
         RedValueVoronoiDiagram,
         SparseRedValueVoronoiDiagram,
     ],
 )
-def test_voronoi(form):
+def test_sustainobject(form):
     f = form((matrix_width, matrix_height))
     drive_event_loop_through_form(f)
 

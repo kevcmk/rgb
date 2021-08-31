@@ -64,6 +64,10 @@ class SimpleSustainObject(KeyAwareForm):
         return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0.0, maximum=0.1)
 
     @property
+    def release_time_s(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=0.0, maximum=0.5)
+
+    @property
     def maximum_grow_velocity_per_s(self) -> float:
         # return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0, maximum=10.0)
         return 5.0
@@ -72,10 +76,6 @@ class SimpleSustainObject(KeyAwareForm):
     def smallest_to_largest_note_base_ratio(self) -> float:
         # return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=1.0, maximum=10.0)
         return 0.5
-
-    @property
-    def release_time_s(self) -> float:
-        return ParameterTuner.linear_scale(BaseForm.dials(3), minimum=0.0, maximum=0.5)
 
     def calculate_grow_velocity_per_s(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
@@ -182,14 +182,14 @@ class WaveSustainObject(SimpleSustainObject, ABC):
     @property
     def wave_attack_time(self) -> float:
         # Wave attack time is a fraction of the shape's attack time
-        return BaseForm.dials(3) * self.attack_time_s
+        return BaseForm.dials(4) * self.attack_time_s
 
     @property
     def wave_release_time(self) -> float:
         # Wave Release time is a fraction of the shape's attack time
-        return BaseForm.dials(3) * self.release_time_s
+        return BaseForm.dials(5) * self.release_time_s
 
-    def wave_scale(self, i: int, dt: float, dt_released: Optional[float]):
+    def wave_scale(self, i, dt: float, dt_released: Optional[float]):
         compute_envelope(dt, dt_released, self.wave_attack_time, self.wave_release_time)
         return ParameterTuner.exponential_scale(i / self.max_wave_width, 0.5, 1.0, 0.0)
 
@@ -197,6 +197,16 @@ class WaveSustainObject(SimpleSustainObject, ABC):
 class RandomWaveShape(WaveSustainObject):
     def calculate_radius(self, p: Press, current_time: float) -> float:
         return super().calculate_radius(p, current_time) / 2
+
+    @property
+    def wave_step(self) -> float:
+        d = BaseForm.dials(6)
+        cutoff = 0.55
+        if d < cutoff:
+            return 1
+        else:
+            shifted = (d - cutoff) / (1 - cutoff)  # Convert [0.55, 1.0] -> [0.0, 1.0]
+            return ParameterTuner.linear_scale(shifted, 1.0, 4.0)
 
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
@@ -207,7 +217,9 @@ class RandomWaveShape(WaveSustainObject):
         dt = time.time() - press.t
         dt_released = time.time() - press._t_released if press._t_released else None
 
-        for i in range(self.max_wave_width):
+        for i in np.linspace(
+            start=0, stop=self.max_wave_width, num=int(self.max_wave_width / self.wave_step), endpoint=False
+        ):
             # Don't worry, this works. Tuple4 is acceptable.
             scale = self.wave_scale(i=i, dt=dt, dt_released=dt_released)
             draw_context.regular_polygon(
@@ -230,6 +242,10 @@ class VerticalWaves(WaveSustainObject):
         dt = time.time() - press.t
         dt_released = time.time() - press._t_released if press._t_released else None
 
+        draw_context.rectangle(
+            (lo, 0, hi, self.matrix_height),
+            fill=color,  # Don't worry, this works. Tuple4 is acceptable.
+        )
         for i in range(self.max_wave_width):
             scale = self.wave_scale(i, dt=dt, dt_released=dt_released)
 
