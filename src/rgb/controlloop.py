@@ -1,4 +1,3 @@
-
 import datetime
 from rgb.parameter_tuner import ParameterTuner
 from rgb.form.baseform import BaseForm
@@ -21,8 +20,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=os.environ.get("PYTHON_LOG_LEVEL", "INFO"))
 
 
-class ControlLoop():
-
+class ControlLoop:
     def __init__(self, display: BaseDisplay, forms: Iterable[BaseForm]):
         self.max_hz = 60
         self.display = display
@@ -32,11 +30,10 @@ class ControlLoop():
         self.midi_receiver_cxn: Optional[connection.Connection] = None
         self.midi_sender_cxn: Optional[connection.Connection] = None
         self.brightness = 1.0
-        
+
         self.forms = forms
-        
+
         self.form_index = 0
-                
 
     def initialize_mqtt(self):
         #                         ⬅
@@ -45,13 +42,13 @@ class ControlLoop():
         (self.midi_receiver_cxn, self.midi_sender_cxn) = multiprocessing.Pipe(duplex=False)
 
         def button_callback(client, userdata, msg):
-            decoded = msg.payload.decode('utf-8')
+            decoded = msg.payload.decode("utf-8")
             log.debug(f"Button callback invoked with message: {decoded}")
 
             if not self.clicker_sender_cxn:
                 log.warning("No sender connection in button_callback")
                 return
-            
+
             try:
                 o = json.loads(decoded)
             except JSONDecodeError as e:
@@ -72,36 +69,37 @@ class ControlLoop():
                 self.clicker_sender_cxn.send(Spectrum(index=o["index"], state=o["state"]))
             else:
                 log.warning(f"Unrecognized message {o}")
-                
+
         def midi_callback(client, userdata, msg):
-            decoded = msg.payload.decode('utf-8')
+            decoded = msg.payload.decode("utf-8")
             log.debug(f"Midi callback invoked with message: {decoded}")
 
             if not self.midi_sender_cxn:
                 log.warning("No sender connection in midi_callback")
                 return
-            
+
             try:
                 o = json.loads(decoded)
             except JSONDecodeError as e:
                 log.info("Failed to parse JSON; aborting. Message: {decoded}", e)
                 return
-            self.midi_sender_cxn.send(o) 
-            latency = f"(Latency {datetime.datetime.utcnow() - datetime.datetime.fromisoformat(o['midi_read_time'])})" \
-                if 'midi_read_time' in o \
-                else ''
+            self.midi_sender_cxn.send(o)
+            latency = (
+                f"(Latency {datetime.datetime.utcnow() - datetime.datetime.fromisoformat(o['midi_read_time'])})"
+                if "midi_read_time" in o
+                else ""
+            )
             log.debug(f"Received MIDI control message: {o} {latency}")
 
-       
         self.handlers = {
             "Button": {
                 0: lambda state: self.previous_form(state),
                 1: lambda state: self.next_form(state),
-                2: lambda state: self.first_form()
+                2: lambda state: self.first_form(),
             },
             "Dial": {
                 0: lambda state: self.set_brightness(state),
-            }
+            },
         }
 
         ima = IMAQT.factory()
@@ -115,24 +113,24 @@ class ControlLoop():
 
     @property
     def max_dt(self):
-        # +1 to prevent 
+        # +1 to prevent
         return 1 / (self.max_hz + 1)
 
     @property
     def form(self):
         return self.forms[self.form_index]
-    
+
     def first_form(self):
         # So all sync to same form
         self.form.cleanup()
         self.form_index = 0
-    
+
     # Button handler, when true change state
     def next_form(self, state):
         if state:
             self.form.cleanup()
             self.form_index = (self.form_index + 1) % len(self.forms)
-    
+
     def previous_form(self, state):
         if state:
             self.form.cleanup()
@@ -140,7 +138,7 @@ class ControlLoop():
 
     def set_brightness(self, state):
         self.brightness = state
-        if state > 0.5: 
+        if state > 0.5:
             # Ignore this if it's high
             log.info("Brightness tuned, but >0.5 so ignoring entirely.")
             pass
@@ -151,8 +149,7 @@ class ControlLoop():
                 self.display.matrix.set_brightness(brightness_value)
             except AttributeError as e:
                 log.exception("Brightness tuned, but display brightness setting not supported.", e)
-            
-    
+
     def midi_handler(self, value: Dict):
         # Key Press: msg.dict() -> {'type': 'note_on', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0} {'type': 'note_off', 'time': 0, 'note': 48, 'velocity': 127, 'channel': 0}
         # Note, this overlaps with the piano keys on a mid-octave
@@ -175,18 +172,18 @@ class ControlLoop():
     def blocking_loop(self):
 
         log.info(f"Running {self.form} at maximum {self.max_hz} Hz...")
-        
+
         t_start = time.time()
         t_last = t_start
-        
+
         while True:
 
             # TODO After?
-            t_last, total_elapsed_since_last_frame = loopwait(t_last, self.max_dt)    
-            
+            t_last, total_elapsed_since_last_frame = loopwait(t_last, self.max_dt)
+
             image = self.form._instrumented_step(total_elapsed_since_last_frame)
             self.display.display(image)
-            
+
             if self.midi_receiver_cxn:
                 while self.midi_receiver_cxn.poll(0):
                     value = self.midi_receiver_cxn.recv()
@@ -195,23 +192,23 @@ class ControlLoop():
                     self.form.midi_handler(value)
                     self.midi_handler(value)
 
-            if self.clicker_receiver_cxn:    
+            if self.clicker_receiver_cxn:
                 while self.clicker_receiver_cxn.poll(0):
                     value = self.clicker_receiver_cxn.recv()
                     log.info(f"clicker_receiver_cxn received: {value}")
-                    
+
                     message_type = type(value).__name__
                     index = value.index
                     state = value.state
-                    
-                    log.info(f"{message_type} -> {index}, {state}")        
+
+                    log.info(f"{message_type} -> {index}, {state}")
                     for target in (self, self.form):
-                        try:            
+                        try:
                             target.handlers[message_type][index](state)
                         except KeyError as e:
                             log.debug(f"No handler for {value} on {target}")
                             continue
-                        else: 
+                        else:
                             # If a handler succeeds, break.
                             log.debug(f"Handler succeeded for {target}")
                             break

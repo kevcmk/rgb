@@ -39,6 +39,9 @@ def compute_envelope(dt: float, dt_released: Optional[float], attack_time_s: flo
 
 class SimpleSustainObject(KeyAwareForm):
 
+    # Hues stepped from 0-1 in 12 steps, providing clear (255,127,0)-typed colors
+    PIECEWISE_HUES = np.linspace(0, 1, num=NUM_NOTES, endpoint=False)
+
     MAX_ATTACK_TIME_S = 0.5
     MAX_RELEASE_TIME_S = 3.0
 
@@ -98,10 +101,10 @@ class SimpleSustainObject(KeyAwareForm):
     def calculate_hue(self, p: Press) -> float:
         """
         This default hue calculation is based on the octave-periodic note value.
-        Returns a [0,1] value. Shifted by base_hue for synesthetics.
+        Returns a stepwise-[0,1] value. Shifted by base_hue for picky synesthetics.
         """
-        note_unit = (p.note % NUM_NOTES) / NUM_NOTES
-        return (self.base_hue + note_unit) % 1.0
+        note_index = (p.note + int(self.base_hue * NUM_NOTES)) % NUM_NOTES
+        return SimpleSustainObject.PIECEWISE_HUES[note_index]
 
     def calculate_color(self, p: Press) -> Tuple[int, int, int, int]:
         """
@@ -194,7 +197,7 @@ class WaveSustainObject(SimpleSustainObject, ABC):
 class RandomWaveShape(WaveSustainObject):
     def calculate_radius(self, p: Press, current_time: float) -> float:
         return super().calculate_radius(p, current_time) / 2
-        
+
     def draw_shape(self, draw_context: ImageDraw.ImageDraw, press: Press, r: float):
         (x, y) = self.calculate_xy_position(press)
         color = self.calculate_color(press)
@@ -364,6 +367,7 @@ class RandomIcon(RandomText):
 class TextSparkles(RandomText):
     def select_string(self, press: Press) -> str:
         return "✦"
+
 
 class TextStars(RandomText):
     SYMBOLS = "★☆"
