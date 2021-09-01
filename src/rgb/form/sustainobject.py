@@ -197,7 +197,7 @@ class WaveSustainObject(SimpleSustainObject, ABC):
 class RandomWaveShape(WaveSustainObject):
     def calculate_radius(self, p: Press, current_time: float) -> float:
         return super().calculate_radius(p, current_time) / 2
-
+    
     @property
     def wave_step(self) -> float:
         d = BaseForm.dials(6)
@@ -226,6 +226,10 @@ class RandomWaveShape(WaveSustainObject):
                 (x, y, r + i), num_sides, rotation=rotation, fill=modulate_alpha(color, scale), outline=None
             )
 
+class RandomWaveShapeReverseSlow(RandomWaveShape):
+    def calculate_hue(self, p: Press) -> float:
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return -(self.base_hue + note_unit) % 1.0
 
 class VerticalWaves(WaveSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):

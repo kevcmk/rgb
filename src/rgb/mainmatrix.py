@@ -23,6 +23,7 @@ if __name__ == "__main__":
         gravity.GravityKeys(dimensions, 0.006),
         gravity.GravityKeysMultiNozzle(dimensions, 0.006),
         sustainobject.RandomWaveShape(dimensions),
+        sustainobject.RandomWaveShapeReverseSlow(dimensions),
         sustainobject.RandomSolidShape(dimensions),
         sustainobject.RandomSolidShapeSlowSpectrum(dimensions),
         sustainobject.RandomIcon(dimensions),
