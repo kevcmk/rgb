@@ -48,8 +48,6 @@ class SimpleSustainObject(KeyAwareForm):
     def __init__(self, dimensions: Tuple[int, int]):
         super().__init__(dimensions)
 
-        self.smallest_note_radius = 6.0
-
     """
     Size / Growth
     """
@@ -61,7 +59,12 @@ class SimpleSustainObject(KeyAwareForm):
 
     @property
     def attack_time_s(self) -> float:
-        return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0.0, maximum=0.1)
+        # return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=0.0, maximum=0.1)
+        return 0.0
+
+    @property
+    def smallest_note_radius(self) -> float:
+        return ParameterTuner.linear_scale(BaseForm.dials(1), minimum=6, maximum=128)
 
     @property
     def release_time_s(self) -> float:
@@ -75,7 +78,7 @@ class SimpleSustainObject(KeyAwareForm):
     @property
     def smallest_to_largest_note_base_ratio(self) -> float:
         # return ParameterTuner.linear_scale(BaseForm.dials(2), minimum=1.0, maximum=10.0)
-        return 0.5
+        return 4.0
 
     def calculate_grow_velocity_per_s(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
@@ -197,7 +200,7 @@ class WaveSustainObject(SimpleSustainObject, ABC):
 class RandomWaveShape(WaveSustainObject):
     def calculate_radius(self, p: Press, current_time: float) -> float:
         return super().calculate_radius(p, current_time) / 2
-    
+
     @property
     def wave_step(self) -> float:
         d = BaseForm.dials(6)
@@ -226,10 +229,12 @@ class RandomWaveShape(WaveSustainObject):
                 (x, y, r + i), num_sides, rotation=rotation, fill=modulate_alpha(color, scale), outline=None
             )
 
+
 class RandomWaveShapeReverseSlow(RandomWaveShape):
     def calculate_hue(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
         return -(self.base_hue + note_unit) % 1.0
+
 
 class VerticalWaves(WaveSustainObject):
     def __init__(self, dimensions: Tuple[int, int]):
@@ -265,7 +270,25 @@ class VerticalWaves(WaveSustainObject):
                 )
 
 
-class VerticalNotesSlowSpectrum(VerticalNotes):
+class RandomVerticalWaveReverseSlow(VerticalWaves):
+    def calculate_hue(self, p: Press) -> float:
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return -(self.base_hue + note_unit) % 1.0
+
+
+class RandomVerticalWaveReverseSlowDarkerLows(RandomVerticalWaveReverseSlow):
+    def calculate_color(self, p: Press) -> Tuple[int, int, int, int]:
+        c = super().calculate_color(p)
+        return modulate_alpha(c, ParameterTuner.linear_scale(p.note / float(NUM_NOTES), BaseForm.dials(7), 1.0))
+
+
+class RandomVerticalWaveReverseSlowDarkerLowsRed(RandomVerticalWaveReverseSlowDarkerLows):
+    def calculate_hue(self, p: Press) -> float:
+        note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
+        return ParameterTuner.linear_scale(note_unit, 0, 0.125 + 0.08) - 0.08
+
+
+class VerticalNotesSlowSpectrum(VerticalWaves):
     def calculate_hue(self, p: Press) -> float:
         note_unit = p.note / NUM_PIANO_KEYBOARD_KEYS
         return (self.base_hue + note_unit) % 1.0
@@ -321,6 +344,9 @@ class RandomText(SimpleSustainObject):
     # TODO Make abstract?
     def select_string(self, press: Press) -> str:
         raise NotImplementedError
+
+    def calculate_radius(self, p: Press, current_time: float) -> float:
+        return int(super().calculate_radius(p, current_time))
 
     def font_cache(self, size: int):
         if size in self._fonts:
@@ -379,9 +405,9 @@ class RandomIcon(RandomText):
     # "𐌊𐌄𐌞𐌉𐌍 𐌊𐌀𐌕"
 
     def select_string(self, press: Press) -> str:
-        # index = hash(press) % len(self.SYMBOLS)
-        # return RandomIcon.SYMBOLS[index]
-        return RandomIcon.random
+        index = hash(press) % len(RandomIcon.SYMBOLS)
+        return RandomIcon.SYMBOLS[index]
+        # return RandomIcon.random
 
 
 class TextSparkles(RandomText):

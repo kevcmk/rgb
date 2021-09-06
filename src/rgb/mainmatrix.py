@@ -12,7 +12,9 @@ if __name__ == "__main__":
     )
 
     forms = (
-        
+        sustainobject.RandomVerticalWaveReverseSlow(dimensions),
+        sustainobject.RandomVerticalWaveReverseSlowDarkerLows(dimensions),
+        sustainobject.RandomVerticalWaveReverseSlowDarkerLowsRed(dimensions),
         # stripes.Stripes(dimensions),
         sustainobject.VerticalWaves(dimensions),
         sustainobject.VerticalNotes(dimensions),
@@ -24,6 +26,7 @@ if __name__ == "__main__":
         gravity.GravityKeysMultiNozzle(dimensions, 0.006),
         sustainobject.RandomWaveShape(dimensions),
         sustainobject.RandomWaveShapeReverseSlow(dimensions),
+        sustainobject.RandomVerticalWaveReverseSlow(dimensions),
         sustainobject.RandomSolidShape(dimensions),
         sustainobject.RandomSolidShapeSlowSpectrum(dimensions),
         sustainobject.RandomIcon(dimensions),
